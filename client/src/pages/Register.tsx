@@ -55,9 +55,9 @@ export const Register: React.FC = () => {
 
       const res = await register(payload);
 
-      if (res.user.role === 'RESTAURANT') navigate('/restaurant/dashboard');
+      if (res.user.role === 'RESTAURANT' || res.user.role === 'RESTAURANT_ADMIN') navigate('/restaurant/dashboard');
       else if (res.user.role === 'DELIVERY_PARTNER') navigate('/delivery/dashboard');
-      else if (res.user.role === 'ADMIN') navigate('/admin/dashboard');
+      else if (res.user.role === 'ADMIN' || res.user.role === 'SUPER_ADMIN') navigate('/admin/dashboard');
       else navigate('/restaurants');
     } catch (err: any) {
       setError(err.message || 'Registration failed. Please verify your details.');
@@ -71,12 +71,17 @@ export const Register: React.FC = () => {
       <div className="w-full max-w-lg bg-white rounded-3xl p-6 sm:p-8 border border-slate-100 shadow-xl space-y-6">
         {/* Header */}
         <div className="text-center space-y-2">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-brand-600 to-brand-400 flex items-center justify-center text-white mx-auto shadow-md shadow-brand-500/20">
-            <UtensilsCrossed className="w-6 h-6" />
-          </div>
-          <h1 className="text-2xl font-black text-slate-900">Create QuickBite Account</h1>
+          <img
+            src="/zavora-logo.png"
+            alt="Zavora Logo"
+            className="w-16 h-16 rounded-2xl object-cover mx-auto shadow-md shadow-purple-900/25"
+          />
+          <h1 className="text-2xl font-black text-slate-900">Create ZAVORA Account</h1>
+          <p className="text-xs text-brand-600 font-bold">
+            Satisfy your hunger instantly
+          </p>
           <p className="text-xs text-slate-500">
-            Join as a diner, partner restaurant chef, or courier delivery driver
+            Join as a customer, partner restaurant kitchen, or courier delivery driver
           </p>
         </div>
 

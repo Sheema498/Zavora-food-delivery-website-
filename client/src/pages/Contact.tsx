@@ -25,7 +25,7 @@ export const Contact: React.FC = () => {
       {/* Header */}
       <div className="text-center max-w-2xl mx-auto space-y-3">
         <h1 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
-          Get in Touch with QuickBite Support
+          Get in Touch with ZAVORA Support
         </h1>
         <p className="text-xs sm:text-sm text-slate-500">
           Have a question about an order, restaurant partnership, or delivery partner onboarding? We are here 24/7.
@@ -36,13 +36,13 @@ export const Contact: React.FC = () => {
         {/* Contact Info Cards */}
         <div className="space-y-4">
           <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm flex items-start gap-4">
-            <div className="w-10 h-10 rounded-2xl bg-orange-50 text-brand-600 flex items-center justify-center shrink-0">
+            <div className="w-10 h-10 rounded-2xl bg-purple-50 text-brand-600 flex items-center justify-center shrink-0">
               <Mail className="w-5 h-5" />
             </div>
             <div>
               <h3 className="text-sm font-bold text-slate-900">Email Us</h3>
-              <p className="text-xs text-slate-500 mt-0.5">support@quickbite.io</p>
-              <p className="text-xs text-slate-500">partners@quickbite.io</p>
+              <p className="text-xs text-slate-500 mt-0.5">support@zavora.com</p>
+              <p className="text-xs text-slate-500">partners@zavora.com</p>
             </div>
           </div>
 

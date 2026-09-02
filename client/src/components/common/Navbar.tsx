@@ -53,15 +53,17 @@ export const Navbar: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-18 flex items-center justify-between gap-4">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2.5 group">
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-orange-600 via-brand-500 to-amber-500 flex items-center justify-center text-white shadow-md shadow-brand-500/25 group-hover:scale-105 transition-transform">
-            <UtensilsCrossed className="w-5 h-5" />
-          </div>
+          <img
+            src="/zavora-logo.png"
+            alt="Zavora Logo"
+            className="w-11 h-11 rounded-2xl object-cover shadow-md shadow-purple-900/20 group-hover:scale-105 transition-transform"
+          />
           <div>
             <span className="text-2xl font-black tracking-tight text-slate-900 flex items-center">
-              Quick<span className="text-brand-500">Bite</span>
+              ZAVORA
             </span>
-            <span className="text-[10px] font-bold text-slate-400 block -mt-1 tracking-wider uppercase">
-              Fresh Food Delivery
+            <span className="text-[10px] font-bold text-brand-600 block -mt-1 tracking-wider">
+              Satisfy your hunger instantly
             </span>
           </div>
         </Link>
@@ -91,7 +93,7 @@ export const Navbar: React.FC = () => {
               My Orders
             </Link>
           )}
-          {isAuthenticated && user?.role === 'RESTAURANT' && (
+          {isAuthenticated && (user?.role === 'RESTAURANT' || user?.role === 'RESTAURANT_ADMIN') && (
             <Link
               to="/restaurant/dashboard"
               className="text-sm font-bold text-orange-600 hover:text-orange-700 flex items-center gap-1.5 bg-orange-50 px-3 py-1.5 rounded-xl border border-orange-200"
@@ -107,7 +109,7 @@ export const Navbar: React.FC = () => {
               <Bike className="w-4 h-4" /> Delivery Console
             </Link>
           )}
-          {isAuthenticated && user?.role === 'ADMIN' && (
+          {isAuthenticated && (user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN') && (
             <Link
               to="/admin/dashboard"
               className="text-sm font-bold text-purple-600 hover:text-purple-700 flex items-center gap-1.5 bg-purple-50 px-3 py-1.5 rounded-xl border border-purple-200"
@@ -298,7 +300,7 @@ export const Navbar: React.FC = () => {
                   My Orders
                 </Link>
               )}
-              {user?.role === 'RESTAURANT' && (
+              {(user?.role === 'RESTAURANT' || user?.role === 'RESTAURANT_ADMIN') && (
                 <Link
                   to="/restaurant/dashboard"
                   onClick={() => setIsMobileMenuOpen(false)}
@@ -316,7 +318,7 @@ export const Navbar: React.FC = () => {
                   Delivery Console
                 </Link>
               )}
-              {user?.role === 'ADMIN' && (
+              {(user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN') && (
                 <Link
                   to="/admin/dashboard"
                   onClick={() => setIsMobileMenuOpen(false)}

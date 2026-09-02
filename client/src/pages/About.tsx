@@ -7,15 +7,15 @@ export const About: React.FC = () => {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-12">
       {/* Hero Section */}
       <div className="text-center max-w-3xl mx-auto space-y-4">
-        <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-orange-100 text-brand-700 rounded-full text-xs font-bold">
+        <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-purple-100 text-purple-800 rounded-full text-xs font-bold">
           <Sparkles className="w-3.5 h-3.5" />
-          <span>About QuickBite Platform</span>
+          <span>About ZAVORA</span>
         </div>
         <h1 className="text-3xl sm:text-5xl font-black text-slate-900 tracking-tight leading-tight">
-          Next-Generation Real-Time Food Delivery Management
+          Satisfy Your Hunger Instantly
         </h1>
         <p className="text-sm sm:text-base text-slate-600 leading-relaxed">
-          QuickBite connects passionate local chefs, hungry customers, and agile delivery partners on a single synchronized platform powered by real-time WebSocket orchestration and keyless topological vector cartography.
+          Zavora connects passionate local chefs, hungry customers, and dedicated delivery partners on a single synchronized platform powered by real-time WebSocket orchestration and keyless topological vector cartography.
         </p>
       </div>
 

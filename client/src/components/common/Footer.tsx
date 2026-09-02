@@ -9,14 +9,19 @@ export const Footer: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Brand */}
           <div className="space-y-3 md:col-span-1">
-            <Link to="/" className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-brand-500 to-orange-500 flex items-center justify-center text-white font-bold shadow-sm">
-                <UtensilsCrossed className="w-4 h-4" />
-              </div>
-              <span className="text-lg font-black text-white tracking-tight">Quick<span className="text-brand-500">Bite</span></span>
+            <Link to="/" className="flex items-center gap-2.5">
+              <img
+                src="/zavora-logo.png"
+                alt="Zavora Logo"
+                className="w-9 h-9 rounded-xl object-cover shadow-sm"
+              />
+              <span className="text-lg font-black text-white tracking-tight">ZAVORA</span>
             </Link>
+            <p className="text-brand-400 text-xs font-semibold">
+              Satisfy your hunger instantly
+            </p>
             <p className="text-slate-400 text-xs leading-relaxed">
-              Real-Time Food Delivery Management System with live GPS tracking, instant driver dispatching, and multi-portal operations.
+              Real-Time Food Delivery Management Platform connecting customers, restaurants, delivery partners, and central dispatch with live GPS tracking.
             </p>
             <div className="inline-flex items-center gap-1.5 bg-slate-800 text-slate-300 px-2.5 py-1 rounded-md text-[11px] font-medium">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
@@ -30,7 +35,7 @@ export const Footer: React.FC = () => {
             <ul className="space-y-2">
               <li><Link to="/restaurants" className="hover:text-white transition-colors">All Restaurants</Link></li>
               <li><Link to="/categories" className="hover:text-white transition-colors">Food Categories</Link></li>
-              <li><Link to="/about" className="hover:text-white transition-colors">About QuickBite</Link></li>
+              <li><Link to="/about" className="hover:text-white transition-colors">About Zavora</Link></li>
               <li><Link to="/contact" className="hover:text-white transition-colors">Contact Support</Link></li>
             </ul>
           </div>
@@ -67,7 +72,7 @@ export const Footer: React.FC = () => {
         </div>
 
         <div className="border-t border-slate-800 mt-10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-slate-400">
-          <p>© {new Date().getFullYear()} QuickBite Platform. All rights reserved. Proprietary Enterprise System.</p>
+          <p>© {new Date().getFullYear()} ZAVORA Platform. All rights reserved. Proprietary Enterprise System.</p>
           <div className="flex items-center gap-4">
             <span>Bengaluru, India</span>
             <span>•</span>
