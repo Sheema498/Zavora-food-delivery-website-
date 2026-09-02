@@ -8,6 +8,8 @@ import { OrderActionModal } from '../components/restaurant/OrderActionModal.js';
 import { formatCurrency, formatDateTime } from '../utils/formatters.js';
 import { ShoppingBag, Clock } from 'lucide-react';
 
+import { soundEffects } from '../utils/audioSynth.js';
+
 export const RestaurantOrders: React.FC = () => {
   const { socket } = useSocket();
   const [orders, setOrders] = useState<Order[]>([]);
@@ -37,10 +39,15 @@ export const RestaurantOrders: React.FC = () => {
 
   useEffect(() => {
     if (!socket) return;
-    socket.on('order:created', fetchOrders);
+    const handleNewOrder = () => {
+      soundEffects.playKitchenAlert();
+      fetchOrders();
+    };
+
+    socket.on('order:created', handleNewOrder);
     socket.on('order:status-changed', fetchOrders);
     return () => {
-      socket.off('order:created', fetchOrders);
+      socket.off('order:created', handleNewOrder);
       socket.off('order:status-changed', fetchOrders);
     };
   }, [socket, statusFilter]);
