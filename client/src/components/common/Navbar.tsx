@@ -190,7 +190,7 @@ export const Navbar: React.FC = () => {
                   </div>
 
                   <div className="py-2">
-                    {user.role === 'ADMIN' && (
+                    {(user.role === 'ADMIN' || user.role === 'SUPER_ADMIN') && (
                       <Link
                         to="/admin/dashboard"
                         className="flex items-center gap-2.5 px-4 py-2 text-xs font-bold text-purple-700 hover:bg-purple-50 transition-colors"
@@ -198,7 +198,7 @@ export const Navbar: React.FC = () => {
                         <ShieldCheck className="w-4 h-4" /> Admin Center
                       </Link>
                     )}
-                    {user.role === 'RESTAURANT' && (
+                    {(user.role === 'RESTAURANT' || user.role === 'RESTAURANT_ADMIN') && (
                       <Link
                         to="/restaurant/dashboard"
                         className="flex items-center gap-2.5 px-4 py-2 text-xs font-bold text-orange-700 hover:bg-orange-50 transition-colors"
