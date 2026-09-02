@@ -49,7 +49,14 @@ export class OrderController {
   }
 
   public static async getRestaurantOrders(req: AuthenticatedRequest, res: Response): Promise<void> {
-    const restaurantId = req.user?.restaurantId || (req.query.restaurantId as string);
+    const isSuperAdmin = req.user?.role === 'ADMIN' || req.user?.role === 'SUPER_ADMIN';
+    const restaurantId = isSuperAdmin
+      ? ((req.query.restaurantId as string) || req.user?.restaurantId)
+      : req.user?.restaurantId;
+
+    if (!restaurantId) {
+      throw new AppError('Restaurant ID required. Access restricted to authorized restaurant account.', HTTP_STATUS.FORBIDDEN);
+    }
     const { status, page, limit } = req.query;
 
     const result = await OrderService.listRestaurantOrders(
@@ -75,6 +82,14 @@ export class OrderController {
     const { id } = req.params;
     const { status, rejectionReason, cancellationReason, estimatedPrepMinutes, restaurantNotes } =
       req.body;
+
+    // Enforce strict restaurant data isolation: Restaurant admin can only update their own restaurant's orders
+    if (req.user?.role === 'RESTAURANT' || req.user?.role === 'RESTAURANT_ADMIN') {
+      const existingOrder = await OrderService.getOrderById(id);
+      if (existingOrder.restaurantId !== req.user.restaurantId) {
+        throw new AppError('Access forbidden: You cannot modify orders from another restaurant.', HTTP_STATUS.FORBIDDEN);
+      }
+    }
 
     const updatedOrder = await OrderService.updateOrderStatus(
       id,
