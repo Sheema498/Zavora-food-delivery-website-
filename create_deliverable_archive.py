@@ -8,7 +8,7 @@ import os
 import zipfile
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
-ARCHIVE_PATH = os.path.join(ROOT_DIR, 'quickbite-verified-deliverable.zip')
+ARCHIVE_PATH = os.path.join(ROOT_DIR, 'zavora-verified-deliverable.zip')
 
 EXCLUDE_DIRS = {
     'node_modules',
