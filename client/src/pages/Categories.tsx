@@ -16,8 +16,8 @@ const POPULAR_CATEGORIES = [
   { name: 'Chinese', icon: '🍜', desc: 'Dim sums, noodles & wok fries' },
   { name: 'Desserts', icon: '🍰', desc: 'Artisanal cakes & Italian gelato' },
   { name: 'Beverages', icon: '🥤', desc: 'Fresh shakes, coffees & coolers' },
-  { name: 'Healthy', icon: '🥗', desc: 'Superfood bowls & fresh salads' },
   { name: 'Snacks', icon: '🍟', desc: 'Crispy starters & finger foods' },
+  { name: 'Healthy Food', icon: '🥗', desc: 'Superfood bowls & fresh salads' },
 ];
 
 export const Categories: React.FC = () => {

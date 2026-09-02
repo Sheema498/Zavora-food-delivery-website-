@@ -22,14 +22,16 @@ import {
 import { Button } from '../components/ui/Button.js';
 
 const POPULAR_CUISINES = [
-  { name: 'Pizza', icon: '🍕', category: 'Pizza', count: '12+ items' },
-  { name: 'Burgers', icon: '🍔', category: 'Burgers', count: '10+ items' },
-  { name: 'Biryani', icon: '🍚', category: 'Biryani', count: '8+ items' },
-  { name: 'South Indian', icon: '🥞', category: 'South Indian', count: '14+ items' },
-  { name: 'North Indian', icon: '🍛', category: 'North Indian', count: '15+ items' },
-  { name: 'Chinese', icon: '🍜', category: 'Chinese', count: '11+ items' },
-  { name: 'Desserts', icon: '🍰', category: 'Desserts', count: '9+ items' },
-  { name: 'Beverages', icon: '🥤', category: 'Beverages', count: '16+ items' },
+  { name: 'Pizza', icon: '🍕', category: 'Pizza', count: 'Artisanal Crusts' },
+  { name: 'Burgers', icon: '🍔', category: 'Burgers', count: 'Smashed & Craft' },
+  { name: 'Biryani', icon: '🍚', category: 'Biryani', count: 'Royal Dum Handi' },
+  { name: 'South Indian', icon: '🥞', category: 'South Indian', count: 'Ghee Roast Tiffins' },
+  { name: 'North Indian', icon: '🍛', category: 'North Indian', count: 'Rich Tandoor & Curries' },
+  { name: 'Chinese', icon: '🍜', category: 'Chinese', count: 'Dim Sum & Noodles' },
+  { name: 'Desserts', icon: '🍰', category: 'Desserts', count: 'Artisanal Sweets' },
+  { name: 'Beverages', icon: '🥤', category: 'Beverages', count: 'Shakes & Coolers' },
+  { name: 'Snacks', icon: '🍟', category: 'Snacks', count: 'Crispy Starters' },
+  { name: 'Healthy Food', icon: '🥗', category: 'Healthy Food', count: 'Nutrient Bowls' },
 ];
 
 export const Home: React.FC = () => {
@@ -69,62 +71,66 @@ export const Home: React.FC = () => {
 
   return (
     <div className="space-y-14 pb-20">
-      {/* Hero Banner with Warm Cohesive Identity */}
-      <section className="relative bg-gradient-to-br from-orange-600 via-brand-600 to-amber-700 text-white py-16 sm:py-24 px-4 sm:px-6 lg:px-8 rounded-3xl overflow-hidden shadow-2xl mx-3 sm:mx-6 mt-4">
+      {/* Hero Banner with ZAVORA Identity */}
+      <section className="relative bg-gradient-to-br from-[#4a2472] via-[#5c2d8d] to-[#7b3fa8] text-white py-16 sm:py-24 px-4 sm:px-6 lg:px-8 rounded-3xl overflow-hidden shadow-2xl mx-3 sm:mx-6 mt-4">
         {/* Soft atmospheric background glow elements */}
-        <div className="absolute -top-24 -right-24 w-96 h-96 bg-white/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-amber-400/15 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -top-24 -right-24 w-96 h-96 bg-amber-400/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-purple-300/15 rounded-full blur-3xl pointer-events-none" />
 
         <div className="relative max-w-4xl mx-auto text-center space-y-6">
-          <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-md px-4 py-1.5 rounded-full text-xs font-bold text-white border border-white/25 shadow-xs">
-            <Sparkles className="w-4 h-4 text-amber-200" />
-            <span>Real-Time Kitchen Queue & Live GPS Fleet Broadcaster</span>
+          <div className="inline-flex items-center gap-2.5 bg-white/15 backdrop-blur-md px-4 py-2 rounded-full text-xs font-bold text-white border border-white/20 shadow-sm">
+            <img
+              src="/zavora-logo.png"
+              alt="Zavora"
+              className="w-5 h-5 rounded-md object-cover"
+            />
+            <span className="tracking-wide">Real-Time Multi-Restaurant Food Delivery Platform</span>
           </div>
 
-          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-tight drop-shadow-sm">
-            Gourmet Food Delivered <br className="hidden sm:inline" />
-            <span className="text-amber-200">
-              Fresh, Fast & Live to Your Doorstep.
+          <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight leading-tight drop-shadow-sm">
+            ZAVORA
+            <span className="block text-2xl sm:text-4xl lg:text-5xl text-amber-300 mt-2 font-black">
+              Satisfy your hunger instantly
             </span>
           </h1>
 
-          <p className="text-sm sm:text-base text-orange-100 max-w-2xl mx-auto leading-relaxed font-medium">
-            Order from top partner restaurants, watch chef prep times in real time, and follow your delivery partner on the keyless topological vector map.
+          <p className="text-sm sm:text-base text-purple-100 max-w-2xl mx-auto leading-relaxed font-medium">
+            Discover six curated artisanal demo restaurants, track kitchen order confirmations live, and follow your dedicated delivery partner with real-time GPS tracking.
           </p>
 
           {/* Search Bar */}
           <form
             onSubmit={handleSearchSubmit}
-            className="max-w-2xl mx-auto bg-white p-2 sm:p-2.5 rounded-3xl shadow-2xl flex flex-col sm:flex-row gap-2 border border-orange-100"
+            className="max-w-2xl mx-auto bg-white p-2 sm:p-2.5 rounded-3xl shadow-2xl flex flex-col sm:flex-row gap-2 border border-purple-100"
           >
             <div className="flex-1 flex items-center pl-4 gap-2.5">
               <Search className="w-5 h-5 text-slate-400 shrink-0" />
               <input
                 type="text"
-                placeholder="Search pizzas, biryanis, smashed burgers, pasta..."
+                placeholder="Search pizzas, biryanis, smashed burgers, pasta, desserts..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none bg-transparent"
               />
             </div>
-            <Button type="submit" variant="primary" size="md" className="shrink-0 px-6 py-3 rounded-2xl">
+            <Button type="submit" variant="primary" size="md" className="shrink-0 px-6 py-3 rounded-2xl bg-brand-500 hover:bg-brand-600">
               Search Food
             </Button>
           </form>
 
           {/* Highlight Badges */}
-          <div className="pt-4 flex flex-wrap justify-center gap-6 text-xs text-orange-100 font-semibold">
-            <div className="flex items-center gap-1.5 bg-black/10 backdrop-blur-xs px-3 py-1.5 rounded-full border border-white/10">
+          <div className="pt-4 flex flex-wrap justify-center gap-6 text-xs text-purple-100 font-semibold">
+            <div className="flex items-center gap-1.5 bg-black/15 backdrop-blur-xs px-3.5 py-1.5 rounded-full border border-white/10">
               <Zap className="w-4 h-4 text-amber-300" />
               <span>~25 Mins Average Delivery</span>
             </div>
-            <div className="flex items-center gap-1.5 bg-black/10 backdrop-blur-xs px-3 py-1.5 rounded-full border border-white/10">
-              <Bike className="w-4 h-4 text-sky-200" />
-              <span>Real-Time Driver GPS</span>
+            <div className="flex items-center gap-1.5 bg-black/15 backdrop-blur-xs px-3.5 py-1.5 rounded-full border border-white/10">
+              <Bike className="w-4 h-4 text-amber-200" />
+              <span>Dedicated Restaurant Couriers</span>
             </div>
-            <div className="flex items-center gap-1.5 bg-black/10 backdrop-blur-xs px-3 py-1.5 rounded-full border border-white/10">
-              <ShieldCheck className="w-4 h-4 text-emerald-300" />
-              <span>100% Verified Quality</span>
+            <div className="flex items-center gap-1.5 bg-black/15 backdrop-blur-xs px-3.5 py-1.5 rounded-full border border-white/10">
+              <Clock className="w-4 h-4 text-emerald-300" />
+              <span>Live Turn-By-Turn GPS</span>
             </div>
           </div>
         </div>
@@ -148,14 +154,14 @@ export const Home: React.FC = () => {
           </Link>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3 sm:gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-5 lg:grid-cols-10 gap-3 sm:gap-3.5">
           {POPULAR_CUISINES.map((cat) => (
             <Link
               key={cat.name}
               to={`/categories?category=${encodeURIComponent(cat.category)}`}
-              className="bg-white rounded-3xl p-4 border border-slate-200 shadow-sm hover:shadow-md hover:border-brand-400 transition-all text-center flex flex-col items-center group cursor-pointer"
+              className="bg-white rounded-3xl p-3 sm:p-4 border border-slate-200 shadow-sm hover:shadow-md hover:border-brand-400 transition-all text-center flex flex-col items-center group cursor-pointer"
             >
-              <div className="w-14 h-14 rounded-2xl bg-orange-50 text-3xl flex items-center justify-center group-hover:scale-110 transition-transform mb-2 shadow-xs">
+              <div className="w-12 h-12 rounded-2xl bg-orange-50 text-2xl flex items-center justify-center group-hover:scale-110 transition-transform mb-2 shadow-xs">
                 {cat.icon}
               </div>
               <span className="text-xs font-bold text-slate-800 group-hover:text-brand-600 transition-colors">

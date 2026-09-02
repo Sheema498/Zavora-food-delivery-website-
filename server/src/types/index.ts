@@ -1,6 +1,6 @@
 import { Request } from 'express';
 
-export type Role = 'CUSTOMER' | 'RESTAURANT' | 'DELIVERY_PARTNER' | 'ADMIN';
+export type Role = 'CUSTOMER' | 'RESTAURANT' | 'RESTAURANT_ADMIN' | 'DELIVERY_PARTNER' | 'ADMIN' | 'SUPER_ADMIN';
 
 export type OrderStatus =
   | 'PENDING'
