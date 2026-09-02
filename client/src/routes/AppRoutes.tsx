@@ -164,6 +164,7 @@ export const AppRoutes: React.FC = () => {
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<AdminDashboard />} />
           <Route path="live-orders" element={<AdminLiveOrders />} />
+          <Route path="live-operations" element={<AdminLiveOrders />} />
           <Route path="users" element={<AdminUsers />} />
           <Route path="restaurants" element={<AdminRestaurants />} />
           <Route path="drivers" element={<AdminDrivers />} />
