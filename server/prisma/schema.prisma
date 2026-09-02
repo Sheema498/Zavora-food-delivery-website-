@@ -1,0 +1,455 @@
+// QuickBite Prisma Relational Database Schema
+// Fully relational schema for food delivery management
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                     String                  @id @default(uuid())
+  email                  String                  @unique
+  passwordHash           String
+  name                   String
+  phone                  String?
+  role                   String                  @default("CUSTOMER") // CUSTOMER, RESTAURANT, DELIVERY_PARTNER, ADMIN
+  isActive               Boolean                 @default(true)
+  avatarUrl              String?
+  createdAt              DateTime                @default(now())
+  updatedAt              DateTime                @updatedAt
+
+  customerProfile        CustomerProfile?
+  restaurantStaff        RestaurantStaff[]
+  deliveryPartnerProfile DeliveryPartnerProfile?
+  orders                 Order[]                 @relation("CustomerOrders")
+  addresses              Address[]
+  notifications          Notification[]
+  auditLogs              AuditLog[]
+  reviews                RestaurantReview[]
+  cart                   Cart?
+
+  @@index([email])
+  @@index([role])
+}
+
+model CustomerProfile {
+  id                String    @id @default(uuid())
+  userId            String    @unique
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  preferredLanguage String    @default("en")
+  loyaltyPoints     Int       @default(0)
+  totalSpent        Float     @default(0.0)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+}
+
+model Address {
+  id             String    @id @default(uuid())
+  userId         String
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  label          String    @default("Home") // Home, Work, Other
+  recipientName  String?
+  phone          String?
+  streetAddress  String
+  landmark       String?
+  city           String
+  state          String
+  postalCode     String
+  latitude       Float     @default(12.9716)
+  longitude      Float     @default(77.5946)
+  isDefault      Boolean   @default(false)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  orders         Order[]
+
+  @@index([userId])
+}
+
+model Restaurant {
+  id                String             @id @default(uuid())
+  name              String
+  slug              String             @unique
+  description       String
+  phone             String
+  email             String
+  logoUrl           String?
+  bannerUrl         String?
+  address           String
+  city              String
+  state             String
+  postalCode        String
+  latitude          Float              @default(12.9716)
+  longitude         Float              @default(77.5946)
+  isOpen            Boolean            @default(true)
+  isFeatured        Boolean            @default(false)
+  cuisineTypes      String             // Comma-separated or JSON list
+  priceRange        String             @default("$$") // $, $$, $$$, $$$$
+  rating            Float              @default(4.5)
+  totalRatings      Int                @default(0)
+  avgPrepTimeMinutes Int               @default(25)
+  deliveryFee       Float              @default(40.0)
+  minOrderAmount    Float              @default(100.0)
+  commissionRate    Float              @default(0.15) // 15% platform commission
+  totalRevenue      Float              @default(0.0)
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  staff             RestaurantStaff[]
+  categories        FoodCategory[]
+  foodItems         FoodItem[]
+  orders            Order[]
+  reviews           RestaurantReview[]
+  carts             Cart[]
+
+  @@index([slug])
+  @@index([isOpen])
+}
+
+model RestaurantStaff {
+  id           String     @id @default(uuid())
+  userId       String
+  restaurantId String
+  role         String     @default("OWNER") // OWNER, MANAGER, CHEF
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, restaurantId])
+  @@index([restaurantId])
+}
+
+model FoodCategory {
+  id           String     @id @default(uuid())
+  restaurantId String
+  name         String
+  slug         String
+  displayOrder Int        @default(0)
+  isActive     Boolean    @default(true)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  foodItems    FoodItem[]
+
+  @@unique([restaurantId, slug])
+  @@index([restaurantId])
+}
+
+model FoodItem {
+  id              String        @id @default(uuid())
+  restaurantId    String
+  categoryId      String
+  name            String
+  description     String
+  price           Float
+  discountPrice   Float?
+  imageUrl        String?
+  isAvailable     Boolean       @default(true)
+  isVegetarian    Boolean       @default(false)
+  isVegan         Boolean       @default(false)
+  isGlutenFree    Boolean       @default(false)
+  isSpicy         Boolean       @default(false)
+  isBestSeller    Boolean       @default(false)
+  prepTimeMinutes Int           @default(15)
+  calories        Int?
+  displayOrder    Int           @default(0)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  restaurant      Restaurant    @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  category        FoodCategory  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  cartItems       CartItem[]
+  orderItems      OrderItem[]
+
+  @@index([restaurantId])
+  @@index([categoryId])
+  @@index([isAvailable])
+}
+
+model Cart {
+  id           String     @id @default(uuid())
+  userId       String     @unique
+  restaurantId String?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  restaurant   Restaurant? @relation(fields: [restaurantId], references: [id], onDelete: SetNull)
+  items        CartItem[]
+}
+
+model CartItem {
+  id                  String    @id @default(uuid())
+  cartId              String
+  foodItemId          String
+  quantity            Int       @default(1)
+  unitPrice           Float
+  specialInstructions String?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  cart                Cart      @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  foodItem            FoodItem  @relation(fields: [foodItemId], references: [id], onDelete: Cascade)
+
+  @@index([cartId])
+  @@index([foodItemId])
+}
+
+model Order {
+  id                      String              @id @default(uuid())
+  orderNumber             String              @unique // e.g. QB-1024
+  customerId              String
+  restaurantId            String
+  deliveryPartnerId       String?
+  addressId               String?
+  status                  String              @default("PENDING") // PENDING, RESTAURANT_ACCEPTED, PREPARING, READY_FOR_PICKUP, DELIVERY_ASSIGNED, DELIVERY_ACCEPTED, ARRIVED_AT_RESTAURANT, PICKED_UP, ON_THE_WAY, DELIVERED, RESTAURANT_REJECTED, CANCELLED
+  subtotal                Float
+  taxAmount               Float
+  deliveryFee             Float
+  discountAmount          Float               @default(0.0)
+  tipAmount               Float               @default(0.0)
+  totalAmount             Float
+  paymentMethod           String              @default("CASH_ON_DELIVERY") // CASH_ON_DELIVERY, ONLINE_DEMO_PAY
+  paymentStatus           String              @default("PENDING") // PENDING, PAID, FAILED, REFUNDED
+  deliveryAddressSnapshot String              // JSON of address snapshot at order time
+  customerNotes           String?
+  restaurantNotes         String?
+  rejectionReason         String?
+  cancellationReason      String?
+  estimatedPrepMinutes    Int                 @default(25)
+  estimatedDeliveryMinutes Int                @default(35)
+  placedAt                DateTime            @default(now())
+  acceptedAt              DateTime?
+  readyAt                 DateTime?
+  assignedAt              DateTime?
+  pickedUpAt              DateTime?
+  deliveredAt             DateTime?
+  cancelledAt             DateTime?
+  createdAt               DateTime            @default(now())
+  updatedAt               DateTime            @updatedAt
+
+  customer                User                @relation("CustomerOrders", fields: [customerId], references: [id], onDelete: Cascade)
+  restaurant              Restaurant          @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  deliveryPartner         DeliveryPartnerProfile? @relation(fields: [deliveryPartnerId], references: [id], onDelete: SetNull)
+  address                 Address?            @relation(fields: [addressId], references: [id], onDelete: SetNull)
+  items                   OrderItem[]
+  statusHistory           OrderStatusHistory[]
+  assignments             DeliveryAssignment[]
+  locations               DeliveryLocationHistory[]
+  payments                Payment[]
+  review                  RestaurantReview?
+
+  @@index([orderNumber])
+  @@index([customerId])
+  @@index([restaurantId])
+  @@index([deliveryPartnerId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model OrderItem {
+  id                  String    @id @default(uuid())
+  orderId             String
+  foodItemId          String
+  name                String
+  quantity            Int
+  unitPrice           Float
+  totalPrice          Float
+  specialInstructions String?
+  createdAt           DateTime  @default(now())
+
+  order               Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  foodItem            FoodItem  @relation(fields: [foodItemId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@index([foodItemId])
+}
+
+model OrderStatusHistory {
+  id            String      @id @default(uuid())
+  orderId       String
+  status        String
+  notes         String?
+  changedById   String?
+  changedByRole String?
+  createdAt     DateTime    @default(now())
+
+  order         Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+}
+
+model DeliveryPartnerProfile {
+  id                 String                     @id @default(uuid())
+  userId             String                     @unique
+  user               User                       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vehicleType        String                     @default("MOTORBIKE") // BICYCLE, MOTORBIKE, SCOOTER, CAR
+  vehicleNumber      String
+  licenseNumber      String
+  isOnline           Boolean                    @default(false)
+  isAvailable        Boolean                    @default(true)
+  currentLatitude    Float                      @default(12.9716)
+  currentLongitude   Float                      @default(77.5946)
+  lastLocationUpdate DateTime                   @default(now())
+  rating             Float                      @default(4.8)
+  totalDeliveries    Int                        @default(0)
+  totalEarnings      Float                      @default(0.0)
+  createdAt          DateTime                   @default(now())
+  updatedAt          DateTime                   @updatedAt
+
+  orders             Order[]
+  assignments        DeliveryAssignment[]
+  locations          DeliveryLocationHistory[]
+
+  @@index([isOnline])
+  @@index([isAvailable])
+}
+
+model DeliveryAssignment {
+  id                String           @id @default(uuid())
+  orderId           String
+  deliveryPartnerId String
+  assignedById      String?
+  status            String           @default("ASSIGNED") // ASSIGNED, ACCEPTED, DECLINED, COMPLETED, REASSIGNED
+  distanceKm        Float            @default(2.5)
+  estimatedMinutes  Int              @default(20)
+  assignedAt        DateTime         @default(now())
+  respondedAt       DateTime?
+  completedAt       DateTime?
+
+  order             Order                  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  deliveryPartner   DeliveryPartnerProfile @relation(fields: [deliveryPartnerId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@index([deliveryPartnerId])
+  @@index([status])
+}
+
+model DeliveryLocationHistory {
+  id                String                 @id @default(uuid())
+  deliveryPartnerId String
+  orderId           String?
+  latitude          Float
+  longitude         Float
+  heading           Float?                 @default(0.0)
+  speed             Float?                 @default(0.0)
+  timestamp         DateTime               @default(now())
+
+  deliveryPartner   DeliveryPartnerProfile @relation(fields: [deliveryPartnerId], references: [id], onDelete: Cascade)
+  order             Order?                 @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([deliveryPartnerId])
+  @@index([orderId])
+  @@index([timestamp])
+}
+
+model Payment {
+  id                     String        @id @default(uuid())
+  orderId                String
+  userId                 String
+  amount                 Float
+  currency               String        @default("INR")
+  method                 String        @default("CASH_ON_DELIVERY") // CASH_ON_DELIVERY, ONLINE_DEMO_PAY
+  status                 String        @default("PENDING") // PENDING, PAID, FAILED, REFUNDED
+  transactionRef         String        @unique
+  paymentGatewayResponse String?       // JSON data
+  createdAt              DateTime      @default(now())
+  updatedAt              DateTime      @updatedAt
+
+  order                  Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@index([transactionRef])
+  @@index([status])
+}
+
+model Coupon {
+  id               String       @id @default(uuid())
+  code             String       @unique
+  description      String
+  discountType     String       @default("PERCENTAGE") // PERCENTAGE, FLAT
+  discountValue    Float
+  minOrderAmount   Float        @default(0.0)
+  maxDiscountAmount Float?
+  usageLimit       Int          @default(1000)
+  usedCount        Int          @default(0)
+  validFrom        DateTime     @default(now())
+  validUntil       DateTime
+  isActive         Boolean      @default(true)
+  createdAt        DateTime     @default(now())
+
+  @@index([code])
+  @@index([isActive])
+}
+
+model RestaurantReview {
+  id                  String     @id @default(uuid())
+  restaurantId        String
+  customerId          String
+  orderId             String     @unique
+  rating              Int        @default(5)
+  comment             String?
+  replyFromRestaurant String?
+  isVerified          Boolean    @default(true)
+  createdAt           DateTime   @default(now())
+  updatedAt           DateTime   @updatedAt
+
+  restaurant          Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  customer            User       @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  order               Order      @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([restaurantId])
+  @@index([customerId])
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String
+  title     String
+  message   String
+  type      String           @default("ORDER_STATUS") // ORDER_STATUS, DELIVERY_ASSIGNED, DELIVERY_UPDATE, PAYMENT, SYSTEM, PROMO
+  dataJson  String?          // JSON metadata
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([isRead])
+}
+
+model AuditLog {
+  id           String   @id @default(uuid())
+  userId       String?
+  action       String   // e.g., "ORDER_CREATED", "STATUS_UPDATED", "ASSIGNED_DRIVER", "USER_LOGIN"
+  resource     String   // e.g., "Order", "User", "DeliveryAssignment"
+  resourceId   String?
+  ipAddress    String?
+  userAgent    String?
+  metadataJson String?
+  createdAt    DateTime @default(now())
+
+  user         User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([action])
+  @@index([resource])
+}
+
+model SystemSetting {
+  id          String   @id @default(uuid())
+  key         String   @unique
+  value       String
+  description String?
+  group       String   @default("GENERAL") // GENERAL, COMMISSION, DELIVERY, NOTIFICATION
+  updatedAt   DateTime @updatedAt
+
+  @@index([key])
+}
