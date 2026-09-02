@@ -15,6 +15,9 @@ import { ToastContainer } from '../components/ui/ToastContainer.js';
 import { Home } from '../pages/Home.js';
 import { Restaurants } from '../pages/Restaurants.js';
 import { RestaurantDetails } from '../pages/RestaurantDetails.js';
+import { Categories } from '../pages/Categories.js';
+import { About } from '../pages/About.js';
+import { Contact } from '../pages/Contact.js';
 import { Checkout } from '../pages/Checkout.js';
 import { OrderConfirmation } from '../pages/OrderConfirmation.js';
 import { LiveOrderTracking } from '../pages/LiveOrderTracking.js';
@@ -53,7 +56,7 @@ import { Register } from '../pages/Register.js';
 import { NotFound } from '../pages/NotFound.js';
 
 const MainLayout: React.FC = () => (
-  <div className="min-h-screen flex flex-col bg-slate-50">
+  <div className="min-h-screen flex flex-col bg-[#faf8f5] text-slate-800">
     <Navbar />
     <main className="flex-1">
       <Outlet />
@@ -66,7 +69,7 @@ const MainLayout: React.FC = () => (
 );
 
 const PortalLayout: React.FC = () => (
-  <div className="min-h-screen flex flex-col bg-slate-50">
+  <div className="min-h-screen flex flex-col bg-[#faf8f5] text-slate-800">
     <Navbar />
     <div className="flex-1 max-w-7xl w-full mx-auto flex">
       <Sidebar />
@@ -110,6 +113,9 @@ export const AppRoutes: React.FC = () => {
         <Route path="/" element={<Home />} />
         <Route path="/restaurants" element={<Restaurants />} />
         <Route path="/restaurant/:id" element={<RestaurantDetails />} />
+        <Route path="/categories" element={<Categories />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/contact" element={<Contact />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
 

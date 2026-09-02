@@ -351,4 +351,89 @@ export class RestaurantService {
       popularItems,
     };
   }
+
+  public static async listAllCategories() {
+    const categories = await prisma.foodCategory.findMany({
+      where: { isActive: true },
+      include: {
+        _count: { select: { foodItems: true } },
+        restaurant: {
+          select: { id: true, name: true, slug: true, logoUrl: true, rating: true, isOpen: true },
+        },
+        foodItems: {
+          take: 3,
+          where: { isAvailable: true },
+          select: { id: true, name: true, price: true, imageUrl: true, isVegetarian: true },
+        },
+      },
+      orderBy: { displayOrder: 'asc' },
+    });
+
+    return categories;
+  }
+
+  public static async searchAllFoodItems(filters: {
+    search?: string;
+    category?: string;
+    cuisine?: string;
+    isVegetarian?: boolean;
+    maxPrice?: number;
+    limit?: number;
+  }) {
+    const limit = filters.limit || 50;
+    const where: Record<string, unknown> = { isAvailable: true };
+
+    if (filters.search) {
+      where.OR = [
+        { name: { contains: filters.search } },
+        { description: { contains: filters.search } },
+      ];
+    }
+
+    if (filters.isVegetarian) {
+      where.isVegetarian = true;
+    }
+
+    if (filters.maxPrice) {
+      where.price = { lte: Number(filters.maxPrice) };
+    }
+
+    if (filters.category) {
+      where.category = {
+        name: { contains: filters.category },
+      };
+    }
+
+    if (filters.cuisine) {
+      where.restaurant = {
+        cuisineTypes: { contains: filters.cuisine },
+      };
+    }
+
+    const items = await prisma.foodItem.findMany({
+      where,
+      take: limit,
+      include: {
+        restaurant: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            cuisineTypes: true,
+            rating: true,
+            isOpen: true,
+            avgPrepTimeMinutes: true,
+            deliveryFee: true,
+          },
+        },
+        category: {
+          select: { id: true, name: true, slug: true },
+        },
+      },
+      orderBy: { isBestSeller: 'desc' },
+    });
+
+    return items;
+  }
 }
+

@@ -33,6 +33,8 @@ const statusSchema = z.object({
 });
 
 // Public discovery endpoints
+router.get('/discovery/categories', asyncHandler(RestaurantController.listCategories));
+router.get('/discovery/food-items', asyncHandler(RestaurantController.searchFoodItems));
 router.get('/', asyncHandler(RestaurantController.list));
 router.get('/:id', asyncHandler(RestaurantController.getById));
 router.get('/:id/menu', asyncHandler(RestaurantController.getMenu));

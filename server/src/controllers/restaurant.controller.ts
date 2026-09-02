@@ -50,6 +50,31 @@ export class RestaurantController {
     });
   }
 
+  public static async listCategories(req: Request, res: Response): Promise<void> {
+    const categories = await RestaurantService.listAllCategories();
+    res.status(HTTP_STATUS.OK).json({
+      success: true,
+      data: categories,
+    });
+  }
+
+  public static async searchFoodItems(req: Request, res: Response): Promise<void> {
+    const { search, category, cuisine, isVegetarian, maxPrice, limit } = req.query;
+    const items = await RestaurantService.searchAllFoodItems({
+      search: search as string,
+      category: category as string,
+      cuisine: cuisine as string,
+      isVegetarian: isVegetarian === 'true',
+      maxPrice: maxPrice ? Number(maxPrice) : undefined,
+      limit: limit ? Number(limit) : 50,
+    });
+
+    res.status(HTTP_STATUS.OK).json({
+      success: true,
+      data: items,
+    });
+  }
+
   // Restaurant Portal Actions
   public static async addFoodItem(req: AuthenticatedRequest, res: Response): Promise<void> {
     const restaurantId = req.user?.restaurantId || req.params.restaurantId;
