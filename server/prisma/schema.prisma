@@ -105,6 +105,7 @@ model Restaurant {
   orders            Order[]
   reviews           RestaurantReview[]
   carts             Cart[]
+  deliveryPartner   DeliveryPartnerProfile?
 
   @@index([slug])
   @@index([isOpen])
@@ -301,8 +302,11 @@ model DeliveryPartnerProfile {
   rating             Float                      @default(4.8)
   totalDeliveries    Int                        @default(0)
   totalEarnings      Float                      @default(0.0)
+  restaurantId       String?                    @unique
   createdAt          DateTime                   @default(now())
   updatedAt          DateTime                   @updatedAt
+
+  restaurant         Restaurant?                @relation(fields: [restaurantId], references: [id], onDelete: SetNull)
 
   orders             Order[]
   assignments        DeliveryAssignment[]
