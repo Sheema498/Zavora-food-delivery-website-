@@ -43,6 +43,24 @@ export const restaurantService = {
     return res.data;
   },
 
+  async listCategories(): Promise<any[]> {
+    const res = await ApiClient.get<any[]>('/restaurants/discovery/categories');
+    return res.data;
+  },
+
+  async searchFoodItems(params: { search?: string; category?: string; cuisine?: string; isVegetarian?: boolean; maxPrice?: number; limit?: number } = {}): Promise<FoodItem[]> {
+    const query = new URLSearchParams();
+    if (params.search) query.set('search', params.search);
+    if (params.category) query.set('category', params.category);
+    if (params.cuisine) query.set('cuisine', params.cuisine);
+    if (params.isVegetarian) query.set('isVegetarian', 'true');
+    if (params.maxPrice) query.set('maxPrice', params.maxPrice.toString());
+    if (params.limit) query.set('limit', params.limit.toString());
+
+    const res = await ApiClient.get<FoodItem[]>(`/restaurants/discovery/food-items?${query.toString()}`);
+    return res.data;
+  },
+
   // Portal Management
   async getPortalStats() {
     const res = await ApiClient.get<any>('/restaurants/portal/stats');

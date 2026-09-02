@@ -1,5 +1,9 @@
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
+import dotenv from 'dotenv';
+
+dotenv.config();
+process.env.DATABASE_URL = process.env.DATABASE_URL || 'file:./dev.db';
 
 const prisma = new PrismaClient();
 
@@ -572,6 +576,309 @@ async function main() {
       prepTimeMinutes: 18,
       calories: 780,
       displayOrder: 2,
+    },
+  });
+
+  // Restaurant 4: Spice Route North Indian
+  const restNorthIndian = await prisma.restaurant.create({
+    data: {
+      name: 'Spice Route North Indian & Tandoor',
+      slug: 'spice-route-north-indian-tandoor',
+      description: 'Traditional slow-simmered Punjabi gravies, butter chicken, rich dal makhani, and clay oven tandoori rotis.',
+      phone: '+91 80 4444 6666',
+      email: 'spiceroute@quickbite.com',
+      logoUrl: 'https://images.unsplash.com/photo-1588166524941-3bf61a9c41db?w=200',
+      bannerUrl: 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=1200',
+      address: '24 MG Road, Central Business District',
+      city: 'Bengaluru',
+      state: 'Karnataka',
+      postalCode: '560001',
+      latitude: 12.9750,
+      longitude: 77.6050,
+      isOpen: true,
+      isFeatured: true,
+      cuisineTypes: 'North Indian, Mughlai, Punjabi, Tandoor',
+      priceRange: '$$',
+      rating: 4.8,
+      totalRatings: 420,
+      avgPrepTimeMinutes: 22,
+      deliveryFee: 35.0,
+      minOrderAmount: 180.0,
+      commissionRate: 0.15,
+      totalRevenue: 54000.0,
+    },
+  });
+
+  const catNorthCurries = await prisma.foodCategory.create({
+    data: { restaurantId: restNorthIndian.id, name: 'North Indian Curries', slug: 'north-indian-curries', displayOrder: 1 },
+  });
+  const catTandoor = await prisma.foodCategory.create({
+    data: { restaurantId: restNorthIndian.id, name: 'Tandoori Breads & Kebabs', slug: 'tandoori-breads-kebabs', displayOrder: 2 },
+  });
+
+  await prisma.foodItem.create({
+    data: {
+      restaurantId: restNorthIndian.id,
+      categoryId: catNorthCurries.id,
+      name: 'Royal Murgh Makhani (Butter Chicken)',
+      description: 'Charcoal-grilled chicken tikkas simmered in silky tomato, cashew, and fresh butter gravy with fenugreek.',
+      price: 389.0,
+      discountPrice: 349.0,
+      imageUrl: 'https://images.unsplash.com/photo-1603894584373-5ac82b2ae398?w=500',
+      isVegetarian: false,
+      isBestSeller: true,
+      prepTimeMinutes: 20,
+      calories: 820,
+      displayOrder: 1,
+    },
+  });
+
+  await prisma.foodItem.create({
+    data: {
+      restaurantId: restNorthIndian.id,
+      categoryId: catNorthCurries.id,
+      name: 'Dal Makhani Slow-Simmered Overnight',
+      description: 'Whole black urad lentils slow-cooked for 16 hours on charcoal with pure ghee, cream, and ginger.',
+      price: 279.0,
+      imageUrl: 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=500',
+      isVegetarian: true,
+      isBestSeller: true,
+      prepTimeMinutes: 15,
+      calories: 610,
+      displayOrder: 2,
+    },
+  });
+
+  await prisma.foodItem.create({
+    data: {
+      restaurantId: restNorthIndian.id,
+      categoryId: catTandoor.id,
+      name: 'Butter Garlic Naan (2 Pcs)',
+      description: 'Hand-stretched leavened flatbread brushed with crushed roasted garlic, fresh cilantro, and melted butter.',
+      price: 119.0,
+      imageUrl: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=500',
+      isVegetarian: true,
+      prepTimeMinutes: 10,
+      calories: 320,
+      displayOrder: 1,
+    },
+  });
+
+  // Restaurant 5: Dosa Junction South Indian
+  const restSouthIndian = await prisma.restaurant.create({
+    data: {
+      name: 'Dosa Junction & Filter Coffee',
+      slug: 'dosa-junction-filter-coffee',
+      description: 'Crispy golden ghee roast dosas, steamed fluffy idlis, crunchy medu vadas, and authentic Kumbakonam degree filter coffee.',
+      phone: '+91 80 4555 3333',
+      email: 'dosajunction@quickbite.com',
+      logoUrl: 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=200',
+      bannerUrl: 'https://images.unsplash.com/photo-1668236543090-82eba5ee5976?w=1200',
+      address: '77 Malleshwaram 8th Cross',
+      city: 'Bengaluru',
+      state: 'Karnataka',
+      postalCode: '560003',
+      latitude: 13.0031,
+      longitude: 77.5684,
+      isOpen: true,
+      isFeatured: true,
+      cuisineTypes: 'South Indian, Vegetarian, Breakfast, Snacks, Beverages',
+      priceRange: '$',
+      rating: 4.9,
+      totalRatings: 630,
+      avgPrepTimeMinutes: 15,
+      deliveryFee: 30.0,
+      minOrderAmount: 100.0,
+      commissionRate: 0.15,
+      totalRevenue: 68000.0,
+    },
+  });
+
+  const catDosas = await prisma.foodCategory.create({
+    data: { restaurantId: restSouthIndian.id, name: 'South Indian Specials', slug: 'south-indian-specials', displayOrder: 1 },
+  });
+  const catBeverages = await prisma.foodCategory.create({
+    data: { restaurantId: restSouthIndian.id, name: 'Beverages & Filter Coffee', slug: 'beverages-filter-coffee', displayOrder: 2 },
+  });
+
+  await prisma.foodItem.create({
+    data: {
+      restaurantId: restSouthIndian.id,
+      categoryId: catDosas.id,
+      name: 'Benne Ghee Roast Masala Dosa',
+      description: 'Crispy fermented rice crepe roasted in aromatic country butter (benne), stuffed with spiced potato mash, served with 3 chutneys and piping hot drumstick sambar.',
+      price: 189.0,
+      discountPrice: 159.0,
+      imageUrl: 'https://images.unsplash.com/photo-1668236543090-82eba5ee5976?w=500',
+      isVegetarian: true,
+      isBestSeller: true,
+      prepTimeMinutes: 12,
+      calories: 520,
+      displayOrder: 1,
+    },
+  });
+
+  await prisma.foodItem.create({
+    data: {
+      restaurantId: restSouthIndian.id,
+      categoryId: catDosas.id,
+      name: 'Ghee Podi Idli Platter (4 Pcs)',
+      description: 'Mini steamed rice cakes tossed in fiery spicy gunpowder podi masala and sizzling desi ghee.',
+      price: 149.0,
+      imageUrl: 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=500',
+      isVegetarian: true,
+      prepTimeMinutes: 10,
+      calories: 380,
+      displayOrder: 2,
+    },
+  });
+
+  await prisma.foodItem.create({
+    data: {
+      restaurantId: restSouthIndian.id,
+      categoryId: catBeverages.id,
+      name: 'Authentic Madras Filter Coffee (Double Shot)',
+      description: 'Freshly brewed chicory coffee decoction frothed with boiled whole milk in brass davarah-tumbler set.',
+      price: 79.0,
+      imageUrl: 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=500',
+      isVegetarian: true,
+      prepTimeMinutes: 5,
+      calories: 110,
+      displayOrder: 1,
+    },
+  });
+
+  // Restaurant 6: Dragon Wok Chinese & Dim Sum
+  const restChinese = await prisma.restaurant.create({
+    data: {
+      name: 'Dragon Wok Chinese & Dim Sum Lab',
+      slug: 'dragon-wok-chinese-dim-sum-lab',
+      description: 'Steamed translucent dim sums, fiery Hakka noodles, crispy spring rolls, and wok-tossed Schezwan fried rice.',
+      phone: '+91 80 4666 2222',
+      email: 'dragonwok@quickbite.com',
+      logoUrl: 'https://images.unsplash.com/photo-1541696432-82c6da8ce7bf?w=200',
+      bannerUrl: 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=1200',
+      address: '90 Lavelle Road, Shanthala Nagar',
+      city: 'Bengaluru',
+      state: 'Karnataka',
+      postalCode: '560001',
+      latitude: 12.9710,
+      longitude: 77.5990,
+      isOpen: true,
+      isFeatured: true,
+      cuisineTypes: 'Chinese, Asian, Dim Sum, Noodles',
+      priceRange: '$$',
+      rating: 4.7,
+      totalRatings: 380,
+      avgPrepTimeMinutes: 18,
+      deliveryFee: 35.0,
+      minOrderAmount: 150.0,
+      commissionRate: 0.15,
+      totalRevenue: 49000.0,
+    },
+  });
+
+  const catChinese = await prisma.foodCategory.create({
+    data: { restaurantId: restChinese.id, name: 'Chinese Noodles & Dim Sum', slug: 'chinese-noodles-dim-sum', displayOrder: 1 },
+  });
+
+  await prisma.foodItem.create({
+    data: {
+      restaurantId: restChinese.id,
+      categoryId: catChinese.id,
+      name: 'Crispy Veg Spring Rolls with Sweet Chilli (6 Pcs)',
+      description: 'Golden fried crispy pastry rolls filled with shredded cabbage, carrots, scallions, and glass noodles.',
+      price: 199.0,
+      imageUrl: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=500',
+      isVegetarian: true,
+      prepTimeMinutes: 12,
+      calories: 340,
+      displayOrder: 1,
+    },
+  });
+
+  await prisma.foodItem.create({
+    data: {
+      restaurantId: restChinese.id,
+      categoryId: catChinese.id,
+      name: 'Fiery Schezwan Chilli Garlic Noodles',
+      description: 'Wok-tossed handmade wheat noodles with roasted red chillies, bell peppers, spring onions, and spicy Schezwan oil.',
+      price: 249.0,
+      imageUrl: 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=500',
+      isVegetarian: true,
+      isSpicy: true,
+      prepTimeMinutes: 15,
+      calories: 580,
+      displayOrder: 2,
+    },
+  });
+
+  // Restaurant 7: Green Earth Healthy Superfoods & Desserts
+  const restHealthy = await prisma.restaurant.create({
+    data: {
+      name: 'Green Earth Healthy Bowls & Desserts',
+      slug: 'green-earth-healthy-bowls-desserts',
+      description: 'Nutrient-rich protein superfood bowls, cold-pressed fruit elixirs, organic quinoa salads, and sugar-free desserts.',
+      phone: '+91 80 4777 1111',
+      email: 'greenearth@quickbite.com',
+      logoUrl: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=200',
+      bannerUrl: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=1200',
+      address: '12 Richmond Town, Victoria Road',
+      city: 'Bengaluru',
+      state: 'Karnataka',
+      postalCode: '560047',
+      latitude: 12.9655,
+      longitude: 77.6105,
+      isOpen: true,
+      isFeatured: true,
+      cuisineTypes: 'Healthy, Salads, Desserts, Snacks, Beverages',
+      priceRange: '$$',
+      rating: 4.8,
+      totalRatings: 290,
+      avgPrepTimeMinutes: 15,
+      deliveryFee: 35.0,
+      minOrderAmount: 150.0,
+      commissionRate: 0.15,
+      totalRevenue: 34000.0,
+    },
+  });
+
+  const catHealthy = await prisma.foodCategory.create({
+    data: { restaurantId: restHealthy.id, name: 'Healthy Superfood Bowls', slug: 'healthy-superfood-bowls', displayOrder: 1 },
+  });
+  const catDesserts = await prisma.foodCategory.create({
+    data: { restaurantId: restHealthy.id, name: 'Artisanal Desserts & Snacks', slug: 'artisanal-desserts-snacks', displayOrder: 2 },
+  });
+
+  await prisma.foodItem.create({
+    data: {
+      restaurantId: restHealthy.id,
+      categoryId: catHealthy.id,
+      name: 'Avocado & Grilled Paneer Power Bowl',
+      description: 'Hass avocado slices, organic tri-color quinoa, baby spinach, edamame beans, and roasted almond flakes with citrus dressing.',
+      price: 349.0,
+      discountPrice: 299.0,
+      imageUrl: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=500',
+      isVegetarian: true,
+      isBestSeller: true,
+      prepTimeMinutes: 12,
+      calories: 460,
+      displayOrder: 1,
+    },
+  });
+
+  await prisma.foodItem.create({
+    data: {
+      restaurantId: restHealthy.id,
+      categoryId: catDesserts.id,
+      name: 'Dark Chocolate Lava Cake with Berry Coulis',
+      description: 'Warm molten 70% Belgian dark chocolate cake with gooey center, fresh raspberries, and dusting of cocoa.',
+      price: 249.0,
+      imageUrl: 'https://images.unsplash.com/photo-1606313564200-e75d5e30476c?w=500',
+      isVegetarian: true,
+      prepTimeMinutes: 10,
+      calories: 490,
+      displayOrder: 1,
     },
   });
 
