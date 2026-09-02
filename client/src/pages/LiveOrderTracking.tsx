@@ -20,6 +20,8 @@ import {
 } from 'lucide-react';
 import { Modal } from '../components/ui/Modal.js';
 
+import { soundEffects } from '../utils/audioSynth.js';
+
 export const LiveOrderTracking: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { socket, joinOrderRoom, leaveOrderRoom } = useSocket();
@@ -64,6 +66,12 @@ export const LiveOrderTracking: React.FC = () => {
 
     const handleStatusUpdate = (data: any) => {
       if (data.orderId === id) {
+        if (data.status === 'DELIVERED') {
+          soundEffects.playDeliveredFanfare();
+        } else {
+          soundEffects.playChime();
+        }
+
         setOrder((prev) => {
           if (!prev) return null;
           return {
