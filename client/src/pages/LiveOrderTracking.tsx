@@ -42,10 +42,11 @@ export const LiveOrderTracking: React.FC = () => {
         setOrder(data);
 
         // Initial driver coordinates if driver is assigned
-        if (data.deliveryPartner) {
+        const courier = data.deliveryBoy || data.deliveryPartner;
+        if (courier && courier.currentLatitude && courier.currentLongitude) {
           setDriverLocation({
-            latitude: data.deliveryPartner.currentLatitude,
-            longitude: data.deliveryPartner.currentLongitude,
+            latitude: courier.currentLatitude,
+            longitude: courier.currentLongitude,
           });
         }
       } catch (err) {
@@ -93,10 +94,11 @@ export const LiveOrderTracking: React.FC = () => {
       if (data.orderId === id) {
         orderService.getOrder(id).then((fresh) => {
           setOrder(fresh);
-          if (fresh.deliveryPartner) {
+          const courier = fresh.deliveryBoy || fresh.deliveryPartner;
+          if (courier && courier.currentLatitude && courier.currentLongitude) {
             setDriverLocation({
-              latitude: fresh.deliveryPartner.currentLatitude,
-              longitude: fresh.deliveryPartner.currentLongitude,
+              latitude: courier.currentLatitude,
+              longitude: courier.currentLongitude,
             });
           }
         });
@@ -104,7 +106,9 @@ export const LiveOrderTracking: React.FC = () => {
     };
 
     const handleLocationUpdate = (data: any) => {
-      if (data.orderId === id || (order?.deliveryPartnerId && data.deliveryPartnerId === order.deliveryPartnerId)) {
+      const activeDriverId = order?.deliveryBoyId || order?.deliveryPartnerId;
+      const eventDriverId = data.deliveryBoyId || data.deliveryPartnerId;
+      if (data.orderId === id || (activeDriverId && eventDriverId === activeDriverId)) {
         setDriverLocation({
           latitude: data.latitude,
           longitude: data.longitude,
@@ -124,7 +128,7 @@ export const LiveOrderTracking: React.FC = () => {
       socket.off('delivery:assigned', handleDeliveryAssigned);
       socket.off('delivery:location-updated', handleLocationUpdate);
     };
-  }, [id, socket, order?.deliveryPartnerId, joinOrderRoom, leaveOrderRoom]);
+  }, [id, socket, order?.deliveryBoyId, order?.deliveryPartnerId, joinOrderRoom, leaveOrderRoom]);
 
   const handleCancelOrder = async () => {
     if (!order) return;
