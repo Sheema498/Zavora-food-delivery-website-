@@ -17,6 +17,8 @@ import {
   CheckCircle2,
   Navigation,
   ArrowLeft,
+  Phone,
+  Package,
 } from 'lucide-react';
 
 export const DeliveryActive: React.FC = () => {
@@ -29,12 +31,14 @@ export const DeliveryActive: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isUpdating, setIsUpdating] = useState<boolean>(false);
 
+  const driverId = user?.deliveryBoyId || user?.deliveryPartnerId;
+
   const fetchActiveDelivery = async () => {
     try {
       setIsLoading(true);
       const data = await deliveryService.getActiveDelivery();
       setOrder(data);
-      if (data && user?.deliveryPartnerId) {
+      if (data) {
         setDriverLocation({
           latitude: data.restaurant.latitude,
           longitude: data.restaurant.longitude,
@@ -70,11 +74,13 @@ export const DeliveryActive: React.FC = () => {
     };
   }, [order?.id, socket, joinOrderRoom, leaveOrderRoom]);
 
-  const handleStepAction = async (action: 'ARRIVED' | 'PICKUP' | 'START' | 'COMPLETE') => {
+  const handleStepAction = async (action: 'ACCEPT' | 'ARRIVED' | 'PICKUP' | 'START' | 'COMPLETE') => {
     if (!order) return;
     try {
       setIsUpdating(true);
-      if (action === 'ARRIVED') {
+      if (action === 'ACCEPT') {
+        await deliveryService.acceptAssignment(order.id);
+      } else if (action === 'ARRIVED') {
         await deliveryService.markArrived(order.id);
       } else if (action === 'PICKUP') {
         await deliveryService.markPickedUp(order.id);
@@ -82,7 +88,7 @@ export const DeliveryActive: React.FC = () => {
         await deliveryService.startDelivery(order.id);
       } else if (action === 'COMPLETE') {
         await deliveryService.completeDelivery(order.id);
-        alert('🎉 Delivery completed successfully! Payout credited to your shift earnings.');
+        alert('🎉 Delivery completed successfully! ₹45 credited to your earnings.');
         navigate('/delivery/dashboard');
         return;
       }
@@ -97,7 +103,7 @@ export const DeliveryActive: React.FC = () => {
   if (isLoading) {
     return (
       <div className="py-20 text-center text-xs text-slate-500">
-        Loading active delivery status...
+        Loading active delivery mission...
       </div>
     );
   }
@@ -106,13 +112,13 @@ export const DeliveryActive: React.FC = () => {
     return (
       <div className="max-w-md mx-auto px-4 py-16 text-center bg-white rounded-3xl border border-slate-100 shadow-sm space-y-4">
         <Bike className="w-12 h-12 text-slate-300 mx-auto" />
-        <h2 className="text-xl font-bold text-slate-900">No Active Delivery Trip</h2>
+        <h2 className="text-xl font-bold text-slate-900">No Active Delivery Mission</h2>
         <p className="text-xs text-slate-500">
-          You currently have no active assigned delivery in progress.
+          You currently have no active assigned order in progress.
         </p>
         <Link to="/delivery/dashboard">
-          <Button variant="primary" size="sm">
-            Back to Dashboard
+          <Button variant="primary" size="sm" className="bg-teal-600 hover:bg-teal-700">
+            Back to Courier Console
           </Button>
         </Link>
       </div>
@@ -121,14 +127,14 @@ export const DeliveryActive: React.FC = () => {
 
   let parsedAddress: any = {
     streetAddress: 'Residency Road, Bangalore',
+    recipientName: 'Customer',
+    phone: '+91 98765 43210',
     latitude: 12.9698,
     longitude: 77.6033,
   };
   try {
     parsedAddress = JSON.parse(order.deliveryAddressSnapshot);
-  } catch {
-    // Fallback
-  }
+  } catch {}
 
   return (
     <div className="space-y-6">
@@ -139,11 +145,11 @@ export const DeliveryActive: React.FC = () => {
             to="/delivery/dashboard"
             className="inline-flex items-center gap-1 text-xs font-semibold text-slate-500 hover:text-slate-800 mb-1"
           >
-            <ArrowLeft className="w-4 h-4" /> Driver Dashboard
+            <ArrowLeft className="w-4 h-4" /> Courier Console
           </Link>
           <div className="flex items-center gap-3">
             <h1 className="text-xl sm:text-2xl font-black text-slate-900">
-              Active Delivery Trip — #{order.orderNumber}
+              Delivery Mission — #{order.orderNumber}
             </h1>
             <StatusBadge status={order.status} />
           </div>
@@ -151,13 +157,13 @@ export const DeliveryActive: React.FC = () => {
 
         <div className="text-right">
           <span className="text-sm font-black text-emerald-600">
-            Trip Pay: {formatCurrency(order.deliveryFee + order.tipAmount + 45.0)}
+            Trip Pay: ₹45.00
           </span>
-          <span className="text-[10px] text-slate-400 block">Base + Distance + Tip</span>
+          <span className="text-[10px] text-slate-400 block">Credited upon completion</span>
         </div>
       </div>
 
-      {/* Main Grid: Map + Turn-by-Turn Action Sheet */}
+      {/* Main Grid: Live Map + Milestone Actions */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left 2 Cols: Live Map & Location Simulator */}
         <div className="lg:col-span-2 space-y-6">
@@ -173,16 +179,16 @@ export const DeliveryActive: React.FC = () => {
             }}
             customerAddress={parsedAddress.streetAddress}
             driverLocation={driverLocation}
-            driverName={user?.name || 'You (Driver)'}
+            driverName={user?.name || 'Kiran (You)'}
             orderStatus={order.status}
             height="440px"
           />
 
           {/* Real-Time GPS Broadcaster Simulator */}
-          {user?.deliveryPartnerId && (
+          {driverId && (
             <LocationSimulator
               orderId={order.id}
-              deliveryPartnerId={user.deliveryPartnerId}
+              deliveryPartnerId={driverId}
               origin={{
                 latitude: order.restaurant.latitude,
                 longitude: order.restaurant.longitude,
@@ -202,26 +208,47 @@ export const DeliveryActive: React.FC = () => {
 
         {/* Right Col: Courier Milestone Actions */}
         <div className="space-y-6">
-          <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm space-y-6">
+          <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm space-y-4">
             <h3 className="text-base font-black text-slate-900 border-b border-slate-100 pb-3">
-              Delivery Action Workflow
+              Delivery Milestones
             </h3>
 
-            {/* Workflow Step 1: Arrived at Restaurant */}
+            {/* Step 0: Accept (if newly assigned) */}
+            {order.status === 'DELIVERY_ASSIGNED' && (
+              <div className="p-4 rounded-2xl bg-cyan-50 border border-cyan-300 space-y-3">
+                <span className="text-xs font-bold uppercase tracking-wider text-cyan-800">
+                  Step 0: Accept Assignment
+                </span>
+                <p className="text-xs text-cyan-900">
+                  Zavora kitchen has packed this order and assigned it to you.
+                </p>
+                <Button
+                  onClick={() => handleStepAction('ACCEPT')}
+                  variant="primary"
+                  size="sm"
+                  className="w-full bg-cyan-600 hover:bg-cyan-700 font-bold"
+                  isLoading={isUpdating}
+                >
+                  Accept Delivery Mission 🛵
+                </Button>
+              </div>
+            )}
+
+            {/* Step 1: Restaurant Pickup */}
             <div
               className={`p-4 rounded-2xl border transition-all space-y-2 ${
                 order.status === 'DELIVERY_ACCEPTED'
-                  ? 'bg-brand-50 border-brand-500 shadow-sm'
-                  : 'bg-slate-50 border-slate-200 opacity-60'
+                  ? 'bg-amber-50 border-amber-400 shadow-sm'
+                  : 'bg-slate-50 border-slate-200 opacity-70'
               }`}
             >
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold uppercase tracking-wider text-brand-700">
-                  Step 1: Restaurant Pickup
+                <span className="text-xs font-bold uppercase tracking-wider text-amber-800">
+                  Step 1: Arrive at Zavora
                 </span>
-                <Store className="w-4 h-4 text-brand-600" />
+                <Store className="w-4 h-4 text-amber-600" />
               </div>
-              <p className="text-xs text-slate-700 font-semibold">{order.restaurant.name}</p>
+              <p className="text-xs text-slate-800 font-bold">{order.restaurant.name}</p>
               <p className="text-[11px] text-slate-500">{order.restaurant.address}</p>
 
               {order.status === 'DELIVERY_ACCEPTED' && (
@@ -229,30 +256,30 @@ export const DeliveryActive: React.FC = () => {
                   onClick={() => handleStepAction('ARRIVED')}
                   variant="primary"
                   size="sm"
-                  className="w-full mt-2"
+                  className="w-full mt-2 bg-amber-600 hover:bg-amber-700 font-bold"
                   isLoading={isUpdating}
                 >
-                  Mark Arrived at Restaurant
+                  Mark Arrived at Zavora 📍
                 </Button>
               )}
             </div>
 
-            {/* Workflow Step 2: Food Picked Up */}
+            {/* Step 2: Food Picked Up */}
             <div
               className={`p-4 rounded-2xl border transition-all space-y-2 ${
                 order.status === 'ARRIVED_AT_RESTAURANT'
-                  ? 'bg-blue-50 border-blue-500 shadow-sm'
-                  : 'bg-slate-50 border-slate-200 opacity-60'
+                  ? 'bg-blue-50 border-blue-400 shadow-sm'
+                  : 'bg-slate-50 border-slate-200 opacity-70'
               }`}
             >
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold uppercase tracking-wider text-blue-700">
-                  Step 2: Collect Food Box
+                <span className="text-xs font-bold uppercase tracking-wider text-blue-800">
+                  Step 2: Collect Thermal Food Bag
                 </span>
-                <CheckCircle2 className="w-4 h-4 text-blue-600" />
+                <Package className="w-4 h-4 text-blue-600" />
               </div>
               <p className="text-xs text-slate-700">
-                Verify {order.items.length} items with the chef
+                Verify {order.items.length} dishes with kitchen chef
               </p>
 
               {order.status === 'ARRIVED_AT_RESTAURANT' && (
@@ -260,66 +287,72 @@ export const DeliveryActive: React.FC = () => {
                   onClick={() => handleStepAction('PICKUP')}
                   variant="primary"
                   size="sm"
-                  className="w-full mt-2"
+                  className="w-full mt-2 bg-blue-600 hover:bg-blue-700 font-bold"
                   isLoading={isUpdating}
                 >
-                  Confirm Food Picked Up
+                  Confirm Food Picked Up 🛍️
                 </Button>
               )}
             </div>
 
-            {/* Workflow Step 3: Start Delivery (On The Way) */}
+            {/* Step 3: Out for Delivery */}
             <div
               className={`p-4 rounded-2xl border transition-all space-y-2 ${
                 order.status === 'PICKED_UP'
-                  ? 'bg-indigo-50 border-indigo-500 shadow-sm'
-                  : 'bg-slate-50 border-slate-200 opacity-60'
+                  ? 'bg-orange-50 border-orange-400 shadow-sm'
+                  : 'bg-slate-50 border-slate-200 opacity-70'
               }`}
             >
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold uppercase tracking-wider text-indigo-700">
-                  Step 3: Out for Delivery
+                <span className="text-xs font-bold uppercase tracking-wider text-orange-800">
+                  Step 3: En Route to Customer
                 </span>
-                <Navigation className="w-4 h-4 text-indigo-600" />
+                <Navigation className="w-4 h-4 text-orange-600" />
               </div>
-              <p className="text-xs text-slate-700">Start live route navigation towards customer</p>
+              <p className="text-xs text-slate-700">Live GPS broadcaster activates automatically</p>
 
               {order.status === 'PICKED_UP' && (
                 <Button
                   onClick={() => handleStepAction('START')}
                   variant="primary"
                   size="sm"
-                  className="w-full mt-2"
+                  className="w-full mt-2 bg-orange-500 hover:bg-orange-600 font-bold"
                   isLoading={isUpdating}
                 >
-                  Start Delivery (On The Way) 🛵
+                  Start Delivery (On The Way) 🚀
                 </Button>
               )}
             </div>
 
-            {/* Workflow Step 4: Mark Delivered */}
+            {/* Step 4: Mark Delivered */}
             <div
               className={`p-4 rounded-2xl border transition-all space-y-2 ${
                 order.status === 'ON_THE_WAY'
                   ? 'bg-emerald-50 border-emerald-500 shadow-sm'
-                  : 'bg-slate-50 border-slate-200 opacity-60'
+                  : 'bg-slate-50 border-slate-200 opacity-70'
               }`}
             >
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold uppercase tracking-wider text-emerald-700">
-                  Step 4: Customer Doorstep
+                <span className="text-xs font-bold uppercase tracking-wider text-emerald-800">
+                  Step 4: Hand Over at Doorstep
                 </span>
                 <MapPin className="w-4 h-4 text-emerald-600" />
               </div>
-              <p className="text-xs text-slate-700 font-semibold">{parsedAddress.recipientName}</p>
+              <p className="text-xs text-slate-800 font-bold">
+                {parsedAddress.recipientName || order.customer?.name}
+              </p>
               <p className="text-[11px] text-slate-500">{parsedAddress.streetAddress}</p>
+              <p className="text-xs text-teal-700 font-semibold flex items-center gap-1">
+                <Phone className="w-3.5 h-3.5" />
+                <span>{parsedAddress.phone || order.customer?.phone}</span>
+              </p>
 
               {order.status === 'ON_THE_WAY' && (
                 <Button
                   onClick={() => handleStepAction('COMPLETE')}
                   variant="success"
                   size="sm"
-                  className="w-full mt-2"
+                  className="w-full mt-2 bg-emerald-600 hover:bg-emerald-700 font-bold"
                   isLoading={isUpdating}
                 >
                   Mark Order as Delivered 🎉

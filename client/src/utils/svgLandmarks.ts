@@ -1,5 +1,5 @@
 /**
- * QuickBite SVG Vector Landmark & Urban Cartography Renderers
+ * Zavora SVG Vector Landmark & Urban Cartography Renderers
  * Generates rich procedural SVG vector features for the interactive keyless map:
  * metro lines, botanical parks, tech campus contours, water bodies, and traffic nodes.
  */

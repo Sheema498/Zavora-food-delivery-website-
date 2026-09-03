@@ -18,6 +18,11 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(() => {
+    const saved = localStorage.getItem('zavora_user');
+    return saved ? JSON.parse(saved) : null;
+  });
+  const [token, setToken] = useState<string | null>(() => {
+    return localStorage.getItem('zavora_auth_token');
     const saved = localStorage.getItem('zavora_user') || localStorage.getItem('quickbite_user');
     return saved ? JSON.parse(saved) : null;
   });
@@ -28,6 +33,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   useEffect(() => {
     const initAuth = async () => {
+      const storedToken = localStorage.getItem('zavora_auth_token');
       const storedToken = localStorage.getItem('zavora_auth_token') || localStorage.getItem('quickbite_auth_token');
       if (storedToken) {
         try {
@@ -81,6 +87,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const quickDemoLogin = async (role: Role): Promise<void> => {
+    let email = 'customer@zavora.com';
+    if (role === 'RESTAURANT_MANAGER' || role === 'RESTAURANT' || role === 'RESTAURANT_ADMIN') {
+      email = 'manager@zavora.com';
+    } else if (role === 'DELIVERY_BOY' || role === 'DELIVERY_PARTNER') {
+      email = 'delivery@zavora.com';
+    } else if (role === 'SUPER_ADMIN' || role === 'ADMIN') {
+      email = 'admin@zavora.com';
+    }
     let email = 'customer@example.com';
     if (role === 'RESTAURANT' || role === 'RESTAURANT_ADMIN') email = 'owner1@zavora.com';
     else if (role === 'DELIVERY_PARTNER') email = 'partner1@zavora.com';

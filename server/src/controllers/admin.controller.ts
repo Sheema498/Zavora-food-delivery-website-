@@ -13,11 +13,39 @@ export class AdminController {
     });
   }
 
+  public static async getAnalytics(req: AuthenticatedRequest, res: Response): Promise<void> {
+    const { range } = req.query;
+    const analytics = await AdminService.getAnalytics(range as any);
+    res.status(HTTP_STATUS.OK).json({
+      success: true,
+      data: analytics,
+    });
+  }
+
   public static async getLiveOrders(_req: AuthenticatedRequest, res: Response): Promise<void> {
     const liveOrders = await AdminService.getLiveOrders();
     res.status(HTTP_STATUS.OK).json({
       success: true,
       data: liveOrders,
+    });
+  }
+
+  public static async listOrders(req: AuthenticatedRequest, res: Response): Promise<void> {
+    const { page, limit, status } = req.query;
+    const result = await AdminService.listOrders(
+      page ? Number(page) : 1,
+      limit ? Number(limit) : 20,
+      status as string
+    );
+    res.status(HTTP_STATUS.OK).json({
+      success: true,
+      data: result.orders,
+      meta: {
+        page: result.page,
+        limit: result.limit,
+        total: result.total,
+        totalPages: result.totalPages,
+      },
     });
   }
 

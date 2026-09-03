@@ -24,6 +24,15 @@ export const requireRole = (...allowedRoles: Role[]) => {
   };
 };
 
+export const requireSuperAdmin = requireRole('SUPER_ADMIN', 'ADMIN');
+export const requireRestaurantManager = requireRole('RESTAURANT_MANAGER', 'RESTAURANT', 'RESTAURANT_ADMIN', 'SUPER_ADMIN', 'ADMIN');
+export const requireDeliveryBoy = requireRole('DELIVERY_BOY', 'DELIVERY_PARTNER', 'SUPER_ADMIN', 'ADMIN');
+export const requireCustomer = requireRole('CUSTOMER', 'SUPER_ADMIN', 'ADMIN');
+
+// Aliases
+export const requireAdmin = requireSuperAdmin;
+export const requireRestaurant = requireRestaurantManager;
+export const requireDeliveryPartner = requireDeliveryBoy;
 export const requireAdmin = requireRole('ADMIN', 'SUPER_ADMIN');
 export const requireRestaurant = requireRole('RESTAURANT', 'RESTAURANT_ADMIN', 'ADMIN', 'SUPER_ADMIN');
 export const requireDeliveryPartner = requireRole('DELIVERY_PARTNER', 'ADMIN', 'SUPER_ADMIN');

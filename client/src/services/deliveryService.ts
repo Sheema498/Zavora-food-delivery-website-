@@ -10,8 +10,12 @@ export const deliveryService = {
     return res.data;
   },
 
-  async assignDriver(orderId: string, deliveryPartnerId: string) {
-    const res = await ApiClient.post<any>('/delivery/assign', { orderId, deliveryPartnerId });
+  async assignDriver(orderId: string, deliveryBoyId: string) {
+    const res = await ApiClient.post<any>('/delivery/assign', {
+      orderId,
+      deliveryBoyId,
+      deliveryPartnerId: deliveryBoyId,
+    });
     return res.data;
   },
 
@@ -23,6 +27,14 @@ export const deliveryService = {
   async getEarnings() {
     const res = await ApiClient.get<any>('/delivery/earnings');
     return res.data;
+  },
+
+  async getHistory(page = 1, limit = 20) {
+    const res = await ApiClient.get<Order[]>(`/delivery/history?page=${page}&limit=${limit}`);
+    return {
+      orders: res.data,
+      meta: res.meta,
+    };
   },
 
   async acceptAssignment(orderId: string): Promise<Order> {
@@ -53,5 +65,9 @@ export const deliveryService = {
   async toggleOnline(isOnline: boolean): Promise<DeliveryPartnerProfile> {
     const res = await ApiClient.put<DeliveryPartnerProfile>('/delivery/online-status', { isOnline });
     return res.data;
+  },
+
+  async toggleOnlineStatus(isOnline: boolean): Promise<DeliveryPartnerProfile> {
+    return this.toggleOnline(isOnline);
   },
 };

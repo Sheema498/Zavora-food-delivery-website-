@@ -46,7 +46,7 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Rate Your QuickBite Experience"
+      title="Rate Your Zavora Meal Experience"
       description={`Order #${order.orderNumber} from ${order.restaurant.name}`}
       maxWidth="sm"
     >

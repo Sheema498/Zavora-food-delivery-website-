@@ -12,7 +12,7 @@ export const config = {
   port: parseInt(process.env.PORT || '5000', 10),
   clientUrl: process.env.CLIENT_URL || 'http://localhost:5173',
   jwt: {
-    secret: process.env.JWT_SECRET || 'quickbite_production_quality_jwt_secret_token_dev_2025',
+    secret: process.env.JWT_SECRET || 'zavora_production_quality_jwt_secret_token_dev_2025',
     expiresIn: process.env.JWT_EXPIRES_IN || '7d',
   },
   databaseUrl: process.env.DATABASE_URL || 'file:./dev.db',

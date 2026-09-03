@@ -10,7 +10,8 @@ interface SocketContextType {
   leaveOrderRoom: (orderId: string) => void;
   emitDriverLocation: (data: {
     orderId?: string;
-    deliveryPartnerId: string;
+    deliveryBoyId?: string;
+    deliveryPartnerId?: string;
     latitude: number;
     longitude: number;
     heading?: number;
@@ -45,13 +46,18 @@ export const SocketProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
     // Sound effect triggers on key socket events
     newSocket.on('order:created', () => {
-      if (user?.role === 'RESTAURANT' || user?.role === 'ADMIN') {
+      if (
+        user?.role === 'RESTAURANT_MANAGER' ||
+        user?.role === 'RESTAURANT' ||
+        user?.role === 'SUPER_ADMIN' ||
+        user?.role === 'ADMIN'
+      ) {
         sounds.playOrderAlert();
       }
     });
 
     newSocket.on('delivery:assigned', () => {
-      if (user?.role === 'DELIVERY_PARTNER') {
+      if (user?.role === 'DELIVERY_BOY' || user?.role === 'DELIVERY_PARTNER') {
         sounds.playOrderAlert();
       }
     });
@@ -85,14 +91,18 @@ export const SocketProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
   const emitDriverLocation = (data: {
     orderId?: string;
-    deliveryPartnerId: string;
+    deliveryBoyId?: string;
+    deliveryPartnerId?: string;
     latitude: number;
     longitude: number;
     heading?: number;
     speed?: number;
   }) => {
     if (socket && isConnected) {
-      socket.emit('driver:location-update', data);
+      socket.emit('driver:location-update', {
+        ...data,
+        deliveryBoyId: data.deliveryBoyId || data.deliveryPartnerId,
+      });
     }
   };
 

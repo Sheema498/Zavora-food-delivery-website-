@@ -97,7 +97,7 @@ export class RestaurantService {
   }
 
   public static async getRestaurantBySlugOrId(identifier: string) {
-    const restaurant = await prisma.restaurant.findFirst({
+    let restaurant = await prisma.restaurant.findFirst({
       where: {
         OR: [{ id: identifier }, { slug: identifier }],
       },
@@ -127,7 +127,35 @@ export class RestaurantService {
     });
 
     if (!restaurant) {
-      throw new AppError('Restaurant not found', HTTP_STATUS.NOT_FOUND);
+      restaurant = await prisma.restaurant.findFirst({
+        include: {
+          categories: {
+            where: { isActive: true },
+            orderBy: { displayOrder: 'asc' },
+            include: {
+              foodItems: {
+                orderBy: { displayOrder: 'asc' },
+              },
+            },
+          },
+          reviews: {
+            orderBy: { createdAt: 'desc' },
+            take: 10,
+            include: {
+              customer: {
+                select: { id: true, name: true, avatarUrl: true },
+              },
+            },
+          },
+          _count: {
+            select: { reviews: true, foodItems: true },
+          },
+        },
+      });
+    }
+
+    if (!restaurant) {
+      throw new AppError('Zavora restaurant not found', HTTP_STATUS.NOT_FOUND);
     }
 
     return restaurant;

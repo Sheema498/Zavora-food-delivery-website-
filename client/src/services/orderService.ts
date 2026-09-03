@@ -3,7 +3,7 @@ import { Order, OrderStatus } from '../types/index.js';
 
 export const orderService = {
   async createOrder(data: {
-    restaurantId: string;
+    restaurantId?: string;
     addressId: string;
     items: Array<{ foodItemId: string; quantity: number; specialInstructions?: string }>;
     paymentMethod: 'CASH_ON_DELIVERY' | 'ONLINE_DEMO_PAY';
@@ -52,6 +52,11 @@ export const orderService = {
       status,
       ...options,
     });
+    return res.data;
+  },
+
+  async assignDeliveryBoy(orderId: string): Promise<Order> {
+    const res = await ApiClient.post<Order>(`/orders/${orderId}/assign-delivery`);
     return res.data;
   },
 

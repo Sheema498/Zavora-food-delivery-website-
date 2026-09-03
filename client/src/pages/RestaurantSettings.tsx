@@ -72,7 +72,7 @@ export const RestaurantSettings: React.FC = () => {
             <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
               <span className="text-slate-400 block mb-1">Platform Commission</span>
               <span className="text-base font-black text-slate-900">
-                {(restaurant.commissionRate * 100).toFixed(0)}%
+                {((restaurant.commissionRate ?? 0.15) * 100).toFixed(0)}%
               </span>
             </div>
           </div>

@@ -1,5 +1,5 @@
 /**
- * QuickBite Client Form Validation Suite
+ * Zavora Client Form Validation Suite
  * Strictly validates emails, Indian mobile numbers (+91), 6-digit postal PIN codes,
  * UPI payment handles, and dish dietary constraints.
  */

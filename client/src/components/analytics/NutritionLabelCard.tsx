@@ -24,7 +24,7 @@ export const NutritionLabelCard: React.FC<NutritionProps> = ({
     <div className="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm space-y-4 max-w-sm">
       <div className="flex items-center justify-between border-b border-slate-900 pb-2">
         <h4 className="text-base font-black text-slate-900 uppercase tracking-tight">Nutrition Facts</h4>
-        <span className="text-xs font-bold bg-slate-900 text-white px-2 py-0.5 rounded">QuickBite Certified</span>
+        <span className="text-xs font-bold bg-slate-900 text-white px-2 py-0.5 rounded">Zavora Certified</span>
       </div>
 
       <div className="space-y-1 text-xs">
