@@ -12,15 +12,6 @@ export interface RegisterDto {
   name: string;
   phone?: string;
   role?: Role;
-  // If registering as Delivery Partner
-  vehicleType?: 'BICYCLE' | 'MOTORBIKE' | 'SCOOTER' | 'CAR';
-  vehicleNumber?: string;
-  licenseNumber?: string;
-  // If registering as Restaurant Owner
-  restaurantName?: string;
-  restaurantAddress?: string;
-  restaurantPhone?: string;
-  cuisineTypes?: string;
 }
 
 export interface LoginDto {
@@ -40,7 +31,8 @@ export class AuthService {
 
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(dto.password, salt);
-    const role: Role = dto.role || 'CUSTOMER';
+    // Customer registration by default on public customer website
+    const role: Role = 'CUSTOMER';
 
     const result = await prisma.$transaction(async (tx) => {
       const user = await tx.user.create({
@@ -53,122 +45,48 @@ export class AuthService {
         },
       });
 
-      let restaurantId: string | undefined;
-      let deliveryPartnerId: string | undefined;
+      await tx.customerProfile.create({
+        data: {
+          userId: user.id,
+        },
+      });
 
-      if (role === 'CUSTOMER') {
-        await tx.customerProfile.create({
-          data: {
-            userId: user.id,
-          },
-        });
-        await tx.cart.create({
-          data: {
-            userId: user.id,
-          },
-        });
-      } else if (role === 'DELIVERY_PARTNER') {
-        const dp = await tx.deliveryPartnerProfile.create({
-          data: {
-            userId: user.id,
-            vehicleType: dto.vehicleType || 'MOTORBIKE',
-            vehicleNumber: dto.vehicleNumber || 'KA-01-EXP-001',
-            licenseNumber: dto.licenseNumber || 'DL-2024-001',
-            currentLatitude: 12.9716,
-            currentLongitude: 77.5946,
-            isOnline: true,
-          },
-        });
-        deliveryPartnerId = dp.id;
-      } else if (role === 'RESTAURANT') {
-        const restName = dto.restaurantName || `${dto.name}'s Kitchen`;
-        const slug =
-          restName
-            .toLowerCase()
-            .replace(/[^a-z0-9]+/g, '-')
-            .replace(/(^-|-$)+/g, '') +
-          '-' +
-          Math.floor(1000 + Math.random() * 9000);
+      await tx.cart.create({
+        data: {
+          userId: user.id,
+        },
+      });
 
-        const rest = await tx.restaurant.create({
-          data: {
-            name: restName,
-            slug,
-            description: 'Artisanal dishes prepared fresh with premium quality ingredients.',
-            phone: dto.restaurantPhone || dto.phone || '9876543210',
-            email: dto.email.toLowerCase().trim(),
-            address: dto.restaurantAddress || '100ft Road, Indiranagar',
-            city: 'Bengaluru',
-            state: 'Karnataka',
-            postalCode: '560001',
-            latitude: 12.9784,
-            longitude: 77.6408,
-            cuisineTypes: dto.cuisineTypes || 'Multi-Cuisine, Fast Food',
-            priceRange: '₹₹',
-            avgPrepTimeMinutes: 20,
-            deliveryFee: 40.0,
-            commissionRate: 0.15,
-            isOpen: true,
-          },
-        });
-
-        await tx.restaurantStaff.create({
-          data: {
-            userId: user.id,
-            restaurantId: rest.id,
-            role: 'OWNER',
-          },
-        });
-
-        // Create default initial category
-        await tx.foodCategory.create({
-          data: {
-            restaurantId: rest.id,
-            name: "Chef's Specials",
-            slug: 'chef-specials',
-            displayOrder: 1,
-          },
-        });
-
-        restaurantId = rest.id;
-      }
-
-      return { user, restaurantId, deliveryPartnerId };
+      return user;
     });
 
-    const userRole = result.user.role as Role;
-
     const payload: AuthUserPayload = {
-      userId: result.user.id,
-      email: result.user.email,
-      role: userRole,
-      name: result.user.name,
-      restaurantId: result.restaurantId,
-      deliveryPartnerId: result.deliveryPartnerId,
+      userId: result.id,
+      email: result.email,
+      role: 'CUSTOMER',
+      name: result.name,
     };
 
     const token = signToken(payload);
 
     await AuditService.log({
-      userId: result.user.id,
+      userId: result.id,
       action: 'USER_REGISTER',
       resource: 'User',
-      resourceId: result.user.id,
+      resourceId: result.id,
       ipAddress,
       userAgent,
-      metadata: { role: result.user.role },
+      metadata: { role: 'CUSTOMER' },
     });
 
     return {
       user: {
-        id: result.user.id,
-        email: result.user.email,
-        name: result.user.name,
-        phone: result.user.phone,
-        role: userRole,
-        avatarUrl: result.user.avatarUrl,
-        restaurantId: result.restaurantId,
-        deliveryPartnerId: result.deliveryPartnerId,
+        id: result.id,
+        email: result.email,
+        name: result.name,
+        phone: result.phone,
+        role: 'CUSTOMER' as Role,
+        avatarUrl: result.avatarUrl,
       },
       token,
     };
@@ -178,8 +96,8 @@ export class AuthService {
     const user = await prisma.user.findUnique({
       where: { email: dto.email.toLowerCase().trim() },
       include: {
-        restaurantStaff: true,
-        deliveryPartnerProfile: true,
+        restaurantManager: true,
+        deliveryBoy: true,
       },
     });
 
@@ -196,9 +114,18 @@ export class AuthService {
       throw new AppError('Invalid email or password credentials', HTTP_STATUS.UNAUTHORIZED);
     }
 
-    const restaurantId = user.restaurantStaff[0]?.restaurantId;
-    const deliveryPartnerId = user.deliveryPartnerProfile?.id;
-    const userRole = user.role as Role;
+    // Normalize canonical roles
+    let userRole = user.role as Role;
+    if ((userRole as string) === 'RESTAURANT' || (userRole as string) === 'RESTAURANT_ADMIN') {
+      userRole = 'RESTAURANT_MANAGER';
+    } else if ((userRole as string) === 'DELIVERY_PARTNER') {
+      userRole = 'DELIVERY_BOY';
+    } else if ((userRole as string) === 'ADMIN') {
+      userRole = 'SUPER_ADMIN';
+    }
+
+    const restaurantId = user.restaurantManager?.restaurantId;
+    const deliveryBoyId = user.deliveryBoy?.id;
 
     const payload: AuthUserPayload = {
       userId: user.id,
@@ -206,7 +133,8 @@ export class AuthService {
       role: userRole,
       name: user.name,
       restaurantId,
-      deliveryPartnerId,
+      deliveryBoyId,
+      deliveryPartnerId: deliveryBoyId,
     };
 
     const token = signToken(payload);
@@ -229,7 +157,8 @@ export class AuthService {
         role: userRole,
         avatarUrl: user.avatarUrl,
         restaurantId,
-        deliveryPartnerId,
+        deliveryBoyId,
+        deliveryPartnerId: deliveryBoyId,
       },
       token,
     };
@@ -239,8 +168,8 @@ export class AuthService {
     const user = await prisma.user.findUnique({
       where: { id: userId },
       include: {
-        restaurantStaff: true,
-        deliveryPartnerProfile: true,
+        restaurantManager: true,
+        deliveryBoy: true,
         customerProfile: true,
       },
     });
@@ -249,19 +178,29 @@ export class AuthService {
       throw new AppError('User profile not found', HTTP_STATUS.NOT_FOUND);
     }
 
-    const restaurantId = user.restaurantStaff[0]?.restaurantId;
-    const deliveryPartnerId = user.deliveryPartnerProfile?.id;
+    let userRole = user.role as Role;
+    if ((userRole as string) === 'RESTAURANT' || (userRole as string) === 'RESTAURANT_ADMIN') {
+      userRole = 'RESTAURANT_MANAGER';
+    } else if ((userRole as string) === 'DELIVERY_PARTNER') {
+      userRole = 'DELIVERY_BOY';
+    } else if ((userRole as string) === 'ADMIN') {
+      userRole = 'SUPER_ADMIN';
+    }
+
+    const restaurantId = user.restaurantManager?.restaurantId;
+    const deliveryBoyId = user.deliveryBoy?.id;
 
     return {
       id: user.id,
       email: user.email,
       name: user.name,
       phone: user.phone,
-      role: user.role as Role,
+      role: userRole,
       avatarUrl: user.avatarUrl,
       isActive: user.isActive,
       restaurantId,
-      deliveryPartnerId,
+      deliveryBoyId,
+      deliveryPartnerId: deliveryBoyId,
       customerProfile: user.customerProfile,
       createdAt: user.createdAt,
     };
@@ -279,23 +218,33 @@ export class AuthService {
         avatarUrl: data.avatarUrl?.trim(),
       },
       include: {
-        restaurantStaff: true,
-        deliveryPartnerProfile: true,
+        restaurantManager: true,
+        deliveryBoy: true,
       },
     });
 
-    const restaurantId = updated.restaurantStaff[0]?.restaurantId;
-    const deliveryPartnerId = updated.deliveryPartnerProfile?.id;
+    let userRole = updated.role as Role;
+    if ((userRole as string) === 'RESTAURANT' || (userRole as string) === 'RESTAURANT_ADMIN') {
+      userRole = 'RESTAURANT_MANAGER';
+    } else if ((userRole as string) === 'DELIVERY_PARTNER') {
+      userRole = 'DELIVERY_BOY';
+    } else if ((userRole as string) === 'ADMIN') {
+      userRole = 'SUPER_ADMIN';
+    }
+
+    const restaurantId = updated.restaurantManager?.restaurantId;
+    const deliveryBoyId = updated.deliveryBoy?.id;
 
     return {
       id: updated.id,
       email: updated.email,
       name: updated.name,
       phone: updated.phone,
-      role: updated.role as Role,
+      role: userRole,
       avatarUrl: updated.avatarUrl,
       restaurantId,
-      deliveryPartnerId,
+      deliveryBoyId,
+      deliveryPartnerId: deliveryBoyId,
     };
   }
 }

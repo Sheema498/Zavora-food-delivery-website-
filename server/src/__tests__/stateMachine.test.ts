@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { OrderStateMachine } from '../domain/orchestration/stateMachine.js';
+import { OrderStateMachine } from '../utils/stateMachine.utils.js';
 
-describe('Order State Machine & Lifecycle Transitions', () => {
+describe('Zavora Order State Machine & Lifecycle Transitions', () => {
   it('should allow valid linear order progression transitions', () => {
     expect(OrderStateMachine.isTransitionValid('PENDING', 'RESTAURANT_ACCEPTED')).toBe(true);
     expect(OrderStateMachine.isTransitionValid('PENDING', 'RESTAURANT_REJECTED')).toBe(true);
@@ -28,28 +28,29 @@ describe('Order State Machine & Lifecycle Transitions', () => {
     expect(OrderStateMachine.isTransitionValid('CANCELLED', 'DELIVERED')).toBe(false);
   });
 
-  it('should enforce role-based authorization matrix', () => {
-    // Restaurant can ACCEPT / REJECT / PREPARE / mark READY
-    expect(OrderStateMachine.isRoleAuthorized('RESTAURANT', 'RESTAURANT_ACCEPTED')).toBe(true);
-    expect(OrderStateMachine.isRoleAuthorized('RESTAURANT', 'PREPARING')).toBe(true);
-    expect(OrderStateMachine.isRoleAuthorized('RESTAURANT', 'READY_FOR_PICKUP')).toBe(true);
-    // Restaurant cannot mark order as DELIVERED
-    expect(OrderStateMachine.isRoleAuthorized('RESTAURANT', 'DELIVERED')).toBe(false);
+  it('should enforce role-based authorization matrix for Zavora 4 roles', () => {
+    // Restaurant Manager can ACCEPT / REJECT / PREPARE / mark READY
+    expect(OrderStateMachine.isRoleAuthorized('RESTAURANT_MANAGER', 'RESTAURANT_ACCEPTED')).toBe(true);
+    expect(OrderStateMachine.isRoleAuthorized('RESTAURANT_MANAGER', 'PREPARING')).toBe(true);
+    expect(OrderStateMachine.isRoleAuthorized('RESTAURANT_MANAGER', 'READY_FOR_PICKUP')).toBe(true);
+    // Restaurant Manager cannot mark order as DELIVERED
+    expect(OrderStateMachine.isRoleAuthorized('RESTAURANT_MANAGER', 'DELIVERED')).toBe(false);
 
-    // Delivery partner can ACCEPT assignment, ARRIVE, PICK UP, and DELIVER
-    expect(OrderStateMachine.isRoleAuthorized('DELIVERY_PARTNER', 'DELIVERY_ACCEPTED')).toBe(true);
-    expect(OrderStateMachine.isRoleAuthorized('DELIVERY_PARTNER', 'PICKED_UP')).toBe(true);
-    expect(OrderStateMachine.isRoleAuthorized('DELIVERY_PARTNER', 'ON_THE_WAY')).toBe(true);
-    expect(OrderStateMachine.isRoleAuthorized('DELIVERY_PARTNER', 'DELIVERED')).toBe(true);
-    // Delivery partner cannot accept kitchen orders
-    expect(OrderStateMachine.isRoleAuthorized('DELIVERY_PARTNER', 'RESTAURANT_ACCEPTED')).toBe(false);
+    // Delivery Boy can ACCEPT assignment, ARRIVE, PICK UP, and DELIVER
+    expect(OrderStateMachine.isRoleAuthorized('DELIVERY_BOY', 'DELIVERY_ACCEPTED')).toBe(true);
+    expect(OrderStateMachine.isRoleAuthorized('DELIVERY_BOY', 'ARRIVED_AT_RESTAURANT')).toBe(true);
+    expect(OrderStateMachine.isRoleAuthorized('DELIVERY_BOY', 'PICKED_UP')).toBe(true);
+    expect(OrderStateMachine.isRoleAuthorized('DELIVERY_BOY', 'ON_THE_WAY')).toBe(true);
+    expect(OrderStateMachine.isRoleAuthorized('DELIVERY_BOY', 'DELIVERED')).toBe(true);
+    // Delivery Boy cannot accept incoming kitchen orders
+    expect(OrderStateMachine.isRoleAuthorized('DELIVERY_BOY', 'RESTAURANT_ACCEPTED')).toBe(false);
 
     // Customer can only CANCEL
     expect(OrderStateMachine.isRoleAuthorized('CUSTOMER', 'CANCELLED')).toBe(true);
     expect(OrderStateMachine.isRoleAuthorized('CUSTOMER', 'DELIVERED')).toBe(false);
 
-    // Admin has superuser transition permissions
-    expect(OrderStateMachine.isRoleAuthorized('ADMIN', 'DELIVERY_ASSIGNED')).toBe(true);
-    expect(OrderStateMachine.isRoleAuthorized('ADMIN', 'CANCELLED')).toBe(true);
+    // Super Admin has complete oversight permissions
+    expect(OrderStateMachine.isRoleAuthorized('SUPER_ADMIN', 'DELIVERY_ASSIGNED')).toBe(true);
+    expect(OrderStateMachine.isRoleAuthorized('SUPER_ADMIN', 'CANCELLED')).toBe(true);
   });
 });
