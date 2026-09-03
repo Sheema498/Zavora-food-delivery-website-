@@ -164,4 +164,4 @@ python measure.py
 ---
 
 ## 7. License
-Licensed under the MIT License. Copyright © 2026 Zavora Restaurant.
+Proprietary and Confidential. Copyright © 2026 Zavora. All rights reserved.
