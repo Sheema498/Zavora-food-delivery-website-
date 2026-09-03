@@ -81,7 +81,7 @@ export const AdminRestaurants: React.FC = () => {
                         <span>{r.rating.toFixed(1)}</span>
                       </div>
                     </td>
-                    <td className="p-4 font-bold text-purple-700">{(r.commissionRate * 100).toFixed(0)}%</td>
+                    <td className="p-4 font-bold text-purple-700">{((r.commissionRate ?? 0.15) * 100).toFixed(0)}%</td>
                     <td className="p-4">
                       {r.isOpen ? (
                         <span className="bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full font-bold text-[10px] border border-emerald-200">

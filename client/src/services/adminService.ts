@@ -7,6 +7,21 @@ export const adminService = {
     return res.data;
   },
 
+  async getAnalytics(range: 'today' | 'yesterday' | '7days' | '30days' | 'monthly' = '7days') {
+    const res = await ApiClient.get<any>(`/admin/analytics?range=${range}`);
+    return res.data;
+  },
+
+  async listOrders(page = 1, limit = 20, status?: string) {
+    const query = new URLSearchParams({ page: page.toString(), limit: limit.toString() });
+    if (status) query.set('status', status);
+    const res = await ApiClient.get<Order[]>(`/admin/orders?${query.toString()}`);
+    return {
+      orders: res.data,
+      meta: res.meta,
+    };
+  },
+
   async getLiveOrders(): Promise<Order[]> {
     const res = await ApiClient.get<Order[]>('/admin/live-orders');
     return res.data;
