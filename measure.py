@@ -47,7 +47,9 @@ EXCLUDED_FILES = {
     'pnpm-lock.yaml',
     'measure.py',
     'tsconfig.tsbuildinfo',
-    'quickbite-verified-deliverable.zip'
+    'quickbite-verified-deliverable.zip',
+    'zavora-food-delivery-website.zip',
+    'Zavora-food-delivery-website.zip',
 }
 
 # Supported production source file extensions
@@ -147,7 +149,7 @@ def measure_loc(root_dir: Path):
 def main():
     root = Path(__file__).resolve().parent
     print("=" * 70)
-    print("   QUICKBITE -- PRODUCTION LINE OF CODE (LOC) MEASUREMENT")
+    print("   ZAVORA -- PRODUCTION LINE OF CODE (LOC) MEASUREMENT")
     print("=" * 70)
     print(f"Scanning root directory: {root}\n")
 
