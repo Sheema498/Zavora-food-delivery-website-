@@ -1,6 +1,14 @@
 import { Request } from 'express';
 
-export type Role = 'CUSTOMER' | 'RESTAURANT' | 'DELIVERY_PARTNER' | 'ADMIN';
+export type Role =
+  | 'CUSTOMER'
+  | 'RESTAURANT_MANAGER'
+  | 'DELIVERY_BOY'
+  | 'SUPER_ADMIN'
+  | 'RESTAURANT'
+  | 'RESTAURANT_ADMIN'
+  | 'DELIVERY_PARTNER'
+  | 'ADMIN';
 
 export type OrderStatus =
   | 'PENDING'
@@ -40,6 +48,7 @@ export interface AuthUserPayload {
   role: Role;
   name: string;
   restaurantId?: string;
+  deliveryBoyId?: string;
   deliveryPartnerId?: string;
 }
 
@@ -79,7 +88,25 @@ export const VALID_ORDER_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
 
 export const ROLE_ALLOWED_STATUS_TRANSITIONS: Record<Role, OrderStatus[]> = {
   CUSTOMER: ['CANCELLED'],
+  RESTAURANT_MANAGER: ['RESTAURANT_ACCEPTED', 'RESTAURANT_REJECTED', 'PREPARING', 'READY_FOR_PICKUP', 'CANCELLED'],
+  DELIVERY_BOY: ['DELIVERY_ACCEPTED', 'ARRIVED_AT_RESTAURANT', 'PICKED_UP', 'ON_THE_WAY', 'DELIVERED'],
+  SUPER_ADMIN: [
+    'PENDING',
+    'RESTAURANT_ACCEPTED',
+    'RESTAURANT_REJECTED',
+    'PREPARING',
+    'READY_FOR_PICKUP',
+    'DELIVERY_ASSIGNED',
+    'DELIVERY_ACCEPTED',
+    'ARRIVED_AT_RESTAURANT',
+    'PICKED_UP',
+    'ON_THE_WAY',
+    'DELIVERED',
+    'CANCELLED',
+  ],
+  // Legacy aliases
   RESTAURANT: ['RESTAURANT_ACCEPTED', 'RESTAURANT_REJECTED', 'PREPARING', 'READY_FOR_PICKUP', 'CANCELLED'],
+  RESTAURANT_ADMIN: ['RESTAURANT_ACCEPTED', 'RESTAURANT_REJECTED', 'PREPARING', 'READY_FOR_PICKUP', 'CANCELLED'],
   DELIVERY_PARTNER: ['DELIVERY_ACCEPTED', 'ARRIVED_AT_RESTAURANT', 'PICKED_UP', 'ON_THE_WAY', 'DELIVERED'],
   ADMIN: [
     'PENDING',
@@ -103,14 +130,14 @@ export interface SocketEventsMap {
   'order:rejected': (data: { orderId: string; reason: string; restaurantName: string }) => void;
   'order:preparing': (data: { orderId: string; restaurantName: string }) => void;
   'order:ready': (data: { orderId: string; restaurantName: string; restaurantId: string }) => void;
-  'delivery:assigned': (data: { orderId: string; deliveryPartnerId: string; orderNumber: string; restaurantName: string; customerAddress: string }) => void;
-  'delivery:accepted': (data: { orderId: string; deliveryPartnerId: string; driverName: string; driverPhone: string }) => void;
+  'delivery:assigned': (data: { orderId: string; deliveryBoyId: string; orderNumber: string; restaurantName: string; customerAddress: string }) => void;
+  'delivery:accepted': (data: { orderId: string; deliveryBoyId: string; driverName: string; driverPhone: string }) => void;
   'delivery:arrived': (data: { orderId: string; driverName: string }) => void;
   'delivery:picked-up': (data: { orderId: string; driverName: string; estimatedMinutes: number }) => void;
   'delivery:started': (data: { orderId: string; driverName: string }) => void;
   'delivery:location-updated': (data: {
     orderId?: string;
-    deliveryPartnerId: string;
+    deliveryBoyId: string;
     latitude: number;
     longitude: number;
     heading?: number;
@@ -119,7 +146,7 @@ export interface SocketEventsMap {
   }) => void;
   'order:delivered': (data: { orderId: string; deliveredAt: string }) => void;
   'notification:new': (data: { id: string; title: string; message: string; type: NotificationType; dataJson?: string; createdAt: string }) => void;
-  'driver:status-changed': (data: { deliveryPartnerId: string; isOnline: boolean; isAvailable: boolean }) => void;
+  'driver:status-changed': (data: { deliveryBoyId: string; isOnline: boolean; isAvailable: boolean }) => void;
 }
 
 export interface LatLng {
@@ -143,7 +170,7 @@ export interface Order {
   orderNumber: string;
   customerId: string;
   restaurantId: string;
-  deliveryPartnerId?: string | null;
+  deliveryBoyId?: string | null;
   status: OrderStatus;
   subtotal: number;
   deliveryFee: number;
@@ -179,7 +206,7 @@ export interface Order {
     email: string;
     phone?: string | null;
   };
-  deliveryPartner?: {
+  deliveryBoy?: {
     id: string;
     vehicleType: VehicleType;
     vehicleNumber?: string | null;

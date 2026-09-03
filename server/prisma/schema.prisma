@@ -1,5 +1,5 @@
-// QuickBite Prisma Relational Database Schema
-// Fully relational schema for food delivery management
+// Zavora Prisma Relational Database Schema
+// Single-restaurant food delivery management architecture
 
 generator client {
   provider = "prisma-client-js"
@@ -11,26 +11,26 @@ datasource db {
 }
 
 model User {
-  id                     String                  @id @default(uuid())
-  email                  String                  @unique
-  passwordHash           String
-  name                   String
-  phone                  String?
-  role                   String                  @default("CUSTOMER") // CUSTOMER, RESTAURANT, DELIVERY_PARTNER, ADMIN
-  isActive               Boolean                 @default(true)
-  avatarUrl              String?
-  createdAt              DateTime                @default(now())
-  updatedAt              DateTime                @updatedAt
+  id                String            @id @default(uuid())
+  email             String            @unique
+  passwordHash      String
+  name              String
+  phone             String?
+  role              String            @default("CUSTOMER") // CUSTOMER, RESTAURANT_MANAGER, DELIVERY_BOY, SUPER_ADMIN
+  isActive          Boolean           @default(true)
+  avatarUrl         String?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
 
-  customerProfile        CustomerProfile?
-  restaurantStaff        RestaurantStaff[]
-  deliveryPartnerProfile DeliveryPartnerProfile?
-  orders                 Order[]                 @relation("CustomerOrders")
-  addresses              Address[]
-  notifications          Notification[]
-  auditLogs              AuditLog[]
-  reviews                RestaurantReview[]
-  cart                   Cart?
+  customerProfile   CustomerProfile?
+  restaurantManager RestaurantManager?
+  deliveryBoy       DeliveryBoy?
+  orders            Order[]           @relation("CustomerOrders")
+  addresses         Address[]
+  notifications     Notification[]
+  auditLogs         AuditLog[]
+  reviews           RestaurantReview[]
+  cart              Cart?
 
   @@index([email])
   @@index([role])
@@ -71,58 +71,84 @@ model Address {
 }
 
 model Restaurant {
-  id                String             @id @default(uuid())
-  name              String
-  slug              String             @unique
-  description       String
-  phone             String
-  email             String
-  logoUrl           String?
-  bannerUrl         String?
-  address           String
-  city              String
-  state             String
-  postalCode        String
-  latitude          Float              @default(12.9716)
-  longitude         Float              @default(77.5946)
-  isOpen            Boolean            @default(true)
-  isFeatured        Boolean            @default(false)
-  cuisineTypes      String             // Comma-separated or JSON list
-  priceRange        String             @default("$$") // $, $$, $$$, $$$$
-  rating            Float              @default(4.5)
-  totalRatings      Int                @default(0)
-  avgPrepTimeMinutes Int               @default(25)
-  deliveryFee       Float              @default(40.0)
-  minOrderAmount    Float              @default(100.0)
-  commissionRate    Float              @default(0.15) // 15% platform commission
-  totalRevenue      Float              @default(0.0)
-  createdAt         DateTime           @default(now())
-  updatedAt         DateTime           @updatedAt
+  id                 String              @id @default(uuid())
+  name               String              @default("Zavora Restaurant")
+  slug               String              @unique @default("zavora-restaurant")
+  description        String              @default("Satisfy your hunger instantly with artisanal, fresh gourmet dishes")
+  phone              String              @default("+91 80 4123 9901")
+  email              String              @default("restaurant@zavora.com")
+  logoUrl            String?             @default("/zavora-logo.png")
+  bannerUrl          String?             @default("https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200")
+  address            String              @default("88 Brigade Road, Ashok Nagar")
+  city               String              @default("Bengaluru")
+  state              String              @default("Karnataka")
+  postalCode         String              @default("560025")
+  latitude           Float               @default(12.9725)
+  longitude          Float               @default(77.6075)
+  isOpen             Boolean             @default(true)
+  cuisineTypes       String              @default("Pizza, Burgers, Biryani, South Indian, North Indian, Chinese, Snacks, Desserts, Beverages")
+  priceRange         String              @default("$$")
+  rating             Float               @default(4.9)
+  totalRatings       Int                 @default(520)
+  avgPrepTimeMinutes Int                 @default(20)
+  deliveryFee        Float               @default(40.0)
+  minOrderAmount     Float               @default(100.0)
+  totalRevenue       Float               @default(0.0)
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
 
-  staff             RestaurantStaff[]
-  categories        FoodCategory[]
-  foodItems         FoodItem[]
-  orders            Order[]
-  reviews           RestaurantReview[]
-  carts             Cart[]
+  managers           RestaurantManager[]
+  deliveryBoys       DeliveryBoy[]
+  categories         FoodCategory[]
+  foodItems          FoodItem[]
+  orders             Order[]
+  reviews            RestaurantReview[]
+  carts              Cart[]
 
   @@index([slug])
   @@index([isOpen])
 }
 
-model RestaurantStaff {
+model RestaurantManager {
   id           String     @id @default(uuid())
-  userId       String
+  userId       String     @unique
   restaurantId String
-  role         String     @default("OWNER") // OWNER, MANAGER, CHEF
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
 
   user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, restaurantId])
   @@index([restaurantId])
+}
+
+model DeliveryBoy {
+  id                 String             @id @default(uuid())
+  userId             String             @unique
+  restaurantId       String
+  vehicleType        String             @default("MOTORBIKE") // BICYCLE, MOTORBIKE, SCOOTER, CAR
+  vehicleNumber      String             @default("KA-01-ZV-1001")
+  licenseNumber      String             @default("DL-KA-2024-0099881")
+  isOnline           Boolean            @default(true)
+  isAvailable        Boolean            @default(true)
+  currentLatitude    Float              @default(12.9725)
+  currentLongitude   Float              @default(77.6075)
+  lastLocationUpdate DateTime           @default(now())
+  rating             Float              @default(4.9)
+  totalDeliveries    Int                @default(0)
+  totalEarnings      Float              @default(0.0)
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  user               User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  restaurant         Restaurant         @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  orders             Order[]
+  assignments        DeliveryAssignment[]
+  locations          DeliveryLocation[]
+
+  @@index([restaurantId])
+  @@index([isOnline])
+  @@index([isAvailable])
 }
 
 model FoodCategory {
@@ -204,10 +230,10 @@ model CartItem {
 
 model Order {
   id                      String              @id @default(uuid())
-  orderNumber             String              @unique // e.g. QB-1024
+  orderNumber             String              @unique // e.g. ZV-1001
   customerId              String
   restaurantId            String
-  deliveryPartnerId       String?
+  deliveryBoyId           String?
   addressId               String?
   status                  String              @default("PENDING") // PENDING, RESTAURANT_ACCEPTED, PREPARING, READY_FOR_PICKUP, DELIVERY_ASSIGNED, DELIVERY_ACCEPTED, ARRIVED_AT_RESTAURANT, PICKED_UP, ON_THE_WAY, DELIVERED, RESTAURANT_REJECTED, CANCELLED
   subtotal                Float
@@ -223,8 +249,8 @@ model Order {
   restaurantNotes         String?
   rejectionReason         String?
   cancellationReason      String?
-  estimatedPrepMinutes    Int                 @default(25)
-  estimatedDeliveryMinutes Int                @default(35)
+  estimatedPrepMinutes    Int                 @default(20)
+  estimatedDeliveryMinutes Int                @default(25)
   placedAt                DateTime            @default(now())
   acceptedAt              DateTime?
   readyAt                 DateTime?
@@ -237,19 +263,19 @@ model Order {
 
   customer                User                @relation("CustomerOrders", fields: [customerId], references: [id], onDelete: Cascade)
   restaurant              Restaurant          @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
-  deliveryPartner         DeliveryPartnerProfile? @relation(fields: [deliveryPartnerId], references: [id], onDelete: SetNull)
+  deliveryBoy             DeliveryBoy?        @relation(fields: [deliveryBoyId], references: [id], onDelete: SetNull)
   address                 Address?            @relation(fields: [addressId], references: [id], onDelete: SetNull)
   items                   OrderItem[]
   statusHistory           OrderStatusHistory[]
   assignments             DeliveryAssignment[]
-  locations               DeliveryLocationHistory[]
+  locations               DeliveryLocation[]
   payments                Payment[]
   review                  RestaurantReview?
 
   @@index([orderNumber])
   @@index([customerId])
   @@index([restaurantId])
-  @@index([deliveryPartnerId])
+  @@index([deliveryBoyId])
   @@index([status])
   @@index([createdAt])
 }
@@ -286,66 +312,40 @@ model OrderStatusHistory {
   @@index([orderId])
 }
 
-model DeliveryPartnerProfile {
-  id                 String                     @id @default(uuid())
-  userId             String                     @unique
-  user               User                       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  vehicleType        String                     @default("MOTORBIKE") // BICYCLE, MOTORBIKE, SCOOTER, CAR
-  vehicleNumber      String
-  licenseNumber      String
-  isOnline           Boolean                    @default(false)
-  isAvailable        Boolean                    @default(true)
-  currentLatitude    Float                      @default(12.9716)
-  currentLongitude   Float                      @default(77.5946)
-  lastLocationUpdate DateTime                   @default(now())
-  rating             Float                      @default(4.8)
-  totalDeliveries    Int                        @default(0)
-  totalEarnings      Float                      @default(0.0)
-  createdAt          DateTime                   @default(now())
-  updatedAt          DateTime                   @updatedAt
-
-  orders             Order[]
-  assignments        DeliveryAssignment[]
-  locations          DeliveryLocationHistory[]
-
-  @@index([isOnline])
-  @@index([isAvailable])
-}
-
 model DeliveryAssignment {
-  id                String           @id @default(uuid())
-  orderId           String
-  deliveryPartnerId String
-  assignedById      String?
-  status            String           @default("ASSIGNED") // ASSIGNED, ACCEPTED, DECLINED, COMPLETED, REASSIGNED
-  distanceKm        Float            @default(2.5)
-  estimatedMinutes  Int              @default(20)
-  assignedAt        DateTime         @default(now())
-  respondedAt       DateTime?
-  completedAt       DateTime?
+  id               String      @id @default(uuid())
+  orderId          String
+  deliveryBoyId    String
+  assignedById     String?
+  status           String      @default("ASSIGNED") // ASSIGNED, ACCEPTED, DECLINED, COMPLETED, REASSIGNED
+  distanceKm       Float       @default(2.5)
+  estimatedMinutes Int         @default(20)
+  assignedAt       DateTime    @default(now())
+  respondedAt      DateTime?
+  completedAt      DateTime?
 
-  order             Order                  @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  deliveryPartner   DeliveryPartnerProfile @relation(fields: [deliveryPartnerId], references: [id], onDelete: Cascade)
+  order            Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  deliveryBoy      DeliveryBoy @relation(fields: [deliveryBoyId], references: [id], onDelete: Cascade)
 
   @@index([orderId])
-  @@index([deliveryPartnerId])
+  @@index([deliveryBoyId])
   @@index([status])
 }
 
-model DeliveryLocationHistory {
-  id                String                 @id @default(uuid())
-  deliveryPartnerId String
-  orderId           String?
-  latitude          Float
-  longitude         Float
-  heading           Float?                 @default(0.0)
-  speed             Float?                 @default(0.0)
-  timestamp         DateTime               @default(now())
+model DeliveryLocation {
+  id            String      @id @default(uuid())
+  deliveryBoyId String
+  orderId       String?
+  latitude      Float
+  longitude     Float
+  heading       Float?      @default(0.0)
+  speed         Float?      @default(0.0)
+  timestamp     DateTime    @default(now())
 
-  deliveryPartner   DeliveryPartnerProfile @relation(fields: [deliveryPartnerId], references: [id], onDelete: Cascade)
-  order             Order?                 @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  deliveryBoy   DeliveryBoy @relation(fields: [deliveryBoyId], references: [id], onDelete: Cascade)
+  order         Order?      @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
-  @@index([deliveryPartnerId])
+  @@index([deliveryBoyId])
   @@index([orderId])
   @@index([timestamp])
 }
@@ -359,7 +359,7 @@ model Payment {
   method                 String        @default("CASH_ON_DELIVERY") // CASH_ON_DELIVERY, ONLINE_DEMO_PAY
   status                 String        @default("PENDING") // PENDING, PAID, FAILED, REFUNDED
   transactionRef         String        @unique
-  paymentGatewayResponse String?       // JSON data
+  paymentGatewayResponse String?
   createdAt              DateTime      @default(now())
   updatedAt              DateTime      @updatedAt
 
@@ -371,19 +371,19 @@ model Payment {
 }
 
 model Coupon {
-  id               String       @id @default(uuid())
-  code             String       @unique
-  description      String
-  discountType     String       @default("PERCENTAGE") // PERCENTAGE, FLAT
-  discountValue    Float
-  minOrderAmount   Float        @default(0.0)
+  id                String       @id @default(uuid())
+  code              String       @unique
+  description       String
+  discountType      String       @default("PERCENTAGE") // PERCENTAGE, FLAT
+  discountValue     Float
+  minOrderAmount    Float        @default(0.0)
   maxDiscountAmount Float?
-  usageLimit       Int          @default(1000)
-  usedCount        Int          @default(0)
-  validFrom        DateTime     @default(now())
-  validUntil       DateTime
-  isActive         Boolean      @default(true)
-  createdAt        DateTime     @default(now())
+  usageLimit        Int          @default(1000)
+  usedCount         Int          @default(0)
+  validFrom         DateTime     @default(now())
+  validUntil        DateTime
+  isActive          Boolean      @default(true)
+  createdAt         DateTime     @default(now())
 
   @@index([code])
   @@index([isActive])

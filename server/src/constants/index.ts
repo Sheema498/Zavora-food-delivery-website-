@@ -1,8 +1,13 @@
 export const ROLES = {
   CUSTOMER: 'CUSTOMER',
-  RESTAURANT: 'RESTAURANT',
-  DELIVERY_PARTNER: 'DELIVERY_PARTNER',
-  ADMIN: 'ADMIN',
+  RESTAURANT_MANAGER: 'RESTAURANT_MANAGER',
+  DELIVERY_BOY: 'DELIVERY_BOY',
+  SUPER_ADMIN: 'SUPER_ADMIN',
+  // Backward compatibility aliases
+  RESTAURANT: 'RESTAURANT_MANAGER',
+  RESTAURANT_ADMIN: 'RESTAURANT_MANAGER',
+  DELIVERY_PARTNER: 'DELIVERY_BOY',
+  ADMIN: 'SUPER_ADMIN',
 } as const;
 
 export const ORDER_STATUS = {
@@ -55,10 +60,23 @@ export const HTTP_STATUS = {
   INTERNAL_SERVER_ERROR: 500,
 } as const;
 
+export const ZAVORA_RESTAURANT = {
+  NAME: 'Zavora Restaurant',
+  SLUG: 'zavora-restaurant',
+  TAGLINE: 'Satisfy your hunger instantly',
+  LATITUDE: 12.9725,
+  LONGITUDE: 77.6075,
+  ADDRESS: '88 Brigade Road, Ashok Nagar',
+  CITY: 'Bengaluru',
+  STATE: 'Karnataka',
+  POSTAL_CODE: '560025',
+  PHONE: '+91 80 4123 9901',
+  EMAIL: 'restaurant@zavora.com',
+};
+
 export const DEFAULT_COORDINATES = {
-  // Center of Bangalore (tech hub / demo metropolis)
-  LATITUDE: 12.9716,
-  LONGITUDE: 77.5946,
+  LATITUDE: 12.9725,
+  LONGITUDE: 77.6075,
   CITY: 'Bengaluru',
   STATE: 'Karnataka',
 };

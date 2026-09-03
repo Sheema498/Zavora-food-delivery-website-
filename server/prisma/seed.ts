@@ -8,13 +8,13 @@ process.env.DATABASE_URL = process.env.DATABASE_URL || 'file:./dev.db';
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('🌱 Starting QuickBite database seeding...');
+  console.log('🌱 Starting ZAVORA single-restaurant database seeding...');
 
   // Clean existing tables in reverse dependency order
   await prisma.auditLog.deleteMany({});
   await prisma.notification.deleteMany({});
   await prisma.restaurantReview.deleteMany({});
-  await prisma.deliveryLocationHistory.deleteMany({});
+  await prisma.deliveryLocation.deleteMany({});
   await prisma.deliveryAssignment.deleteMany({});
   await prisma.payment.deleteMany({});
   await prisma.orderStatusHistory.deleteMany({});
@@ -24,9 +24,9 @@ async function main() {
   await prisma.cart.deleteMany({});
   await prisma.foodItem.deleteMany({});
   await prisma.foodCategory.deleteMany({});
-  await prisma.restaurantStaff.deleteMany({});
+  await prisma.restaurantManager.deleteMany({});
+  await prisma.deliveryBoy.deleteMany({});
   await prisma.restaurant.deleteMany({});
-  await prisma.deliveryPartnerProfile.deleteMany({});
   await prisma.address.deleteMany({});
   await prisma.customerProfile.deleteMany({});
   await prisma.coupon.deleteMany({});
@@ -55,7 +55,7 @@ async function main() {
   await prisma.coupon.createMany({
     data: [
       {
-        code: 'QUICK50',
+        code: 'ZAVORA50',
         description: 'Get 50% OFF up to ₹100 on orders above ₹199',
         discountType: 'PERCENTAGE',
         discountValue: 50,
@@ -66,7 +66,7 @@ async function main() {
       },
       {
         code: 'WELCOME100',
-        description: 'Flat ₹100 OFF on your first gourmet order above ₹299',
+        description: 'Flat ₹100 OFF on your first Zavora order above ₹299',
         discountType: 'FLAT',
         discountValue: 100,
         minOrderAmount: 299,
@@ -75,7 +75,7 @@ async function main() {
       },
       {
         code: 'TASTY20',
-        description: '20% OFF on all restaurant orders up to ₹75',
+        description: '20% OFF on all gourmet dishes up to ₹75',
         discountType: 'PERCENTAGE',
         discountValue: 20,
         minOrderAmount: 149,
@@ -86,23 +86,114 @@ async function main() {
     ],
   });
 
-  // 3. Admin User
+  // 3. Super Admin User
   const adminUser = await prisma.user.create({
     data: {
-      email: 'admin@quickbite.com',
+      email: 'admin@zavora.com',
       passwordHash: commonPasswordHash,
-      name: 'System Administrator',
+      name: 'System Super Administrator',
       phone: '+91 99001 00001',
-      role: 'ADMIN',
+      role: 'SUPER_ADMIN',
       isActive: true,
       avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
     },
   });
 
-  // 4. Customer Users & Addresses
+  // Also seed legacy admin email as alias if needed
+  await prisma.user.create({
+    data: {
+      email: 'admin@quickbite.com',
+      passwordHash: commonPasswordHash,
+      name: 'Super Admin Alias',
+      phone: '+91 99001 00002',
+      role: 'SUPER_ADMIN',
+      isActive: true,
+      avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+    },
+  });
+
+  // 4. THE SINGLE RESTAURANT: Zavora Restaurant
+  const zavoraRestaurant = await prisma.restaurant.create({
+    data: {
+      name: 'Zavora Restaurant',
+      slug: 'zavora-restaurant',
+      description: 'Satisfy your hunger instantly with artisanal, fresh gourmet pizzas, sizzling burgers, fragrant biryanis, and royal curries.',
+      phone: '+91 80 4123 9901',
+      email: 'restaurant@zavora.com',
+      logoUrl: '/zavora-logo.png',
+      bannerUrl: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200',
+      address: '88 Brigade Road, Ashok Nagar',
+      city: 'Bengaluru',
+      state: 'Karnataka',
+      postalCode: '560025',
+      latitude: 12.9725,
+      longitude: 77.6075,
+      isOpen: true,
+      cuisineTypes: 'Pizza, Burgers, Biryani, South Indian, North Indian, Chinese, Snacks, Desserts, Beverages',
+      priceRange: '$$',
+      rating: 4.9,
+      totalRatings: 520,
+      avgPrepTimeMinutes: 20,
+      deliveryFee: 40.0,
+      minOrderAmount: 100.0,
+      totalRevenue: 34850.0,
+    },
+  });
+
+  // 5. THE ONE RESTAURANT MANAGER
+  const managerUser = await prisma.user.create({
+    data: {
+      email: 'manager@zavora.com',
+      passwordHash: commonPasswordHash,
+      name: 'Chef Rajesh Sharma (Kitchen Head)',
+      phone: '+91 98888 11001',
+      role: 'RESTAURANT_MANAGER',
+      isActive: true,
+      avatarUrl: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=150',
+    },
+  });
+
+  await prisma.restaurantManager.create({
+    data: {
+      userId: managerUser.id,
+      restaurantId: zavoraRestaurant.id,
+    },
+  });
+
+  // 6. THE ONE DELIVERY BOY
+  const deliveryBoyUser = await prisma.user.create({
+    data: {
+      email: 'delivery@zavora.com',
+      passwordHash: commonPasswordHash,
+      name: 'Kiran Kumar (Zavora Dedicated Courier)',
+      phone: '+91 97777 22001',
+      role: 'DELIVERY_BOY',
+      isActive: true,
+      avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
+    },
+  });
+
+  const zavoraDeliveryBoy = await prisma.deliveryBoy.create({
+    data: {
+      userId: deliveryBoyUser.id,
+      restaurantId: zavoraRestaurant.id,
+      vehicleType: 'MOTORBIKE',
+      vehicleNumber: 'KA-01-ZV-1001',
+      licenseNumber: 'DL-KA-2024-0099881',
+      isOnline: true,
+      isAvailable: true,
+      currentLatitude: 12.9725,
+      currentLongitude: 77.6075,
+      rating: 4.9,
+      totalDeliveries: 142,
+      totalEarnings: 6390.0,
+    },
+  });
+
+  // 7. Customers & Delivery Addresses
   const customer1 = await prisma.user.create({
     data: {
-      email: 'customer@example.com',
+      email: 'customer@zavora.com',
       passwordHash: commonPasswordHash,
       name: 'Alex Johnson',
       phone: '+91 98765 43210',
@@ -112,8 +203,8 @@ async function main() {
       customerProfile: {
         create: {
           preferredLanguage: 'en',
-          loyaltyPoints: 120,
-          totalSpent: 1450.0,
+          loyaltyPoints: 240,
+          totalSpent: 3420.0,
         },
       },
     },
@@ -155,7 +246,7 @@ async function main() {
 
   const customer2 = await prisma.user.create({
     data: {
-      email: 'priya.customer@example.com',
+      email: 'priya@zavora.com',
       passwordHash: commonPasswordHash,
       name: 'Priya Sharma',
       phone: '+91 98111 22233',
@@ -165,8 +256,8 @@ async function main() {
       customerProfile: {
         create: {
           preferredLanguage: 'en',
-          loyaltyPoints: 85,
-          totalSpent: 890.0,
+          loyaltyPoints: 120,
+          totalSpent: 1650.0,
         },
       },
     },
@@ -178,949 +269,559 @@ async function main() {
       label: 'Home',
       recipientName: 'Priya Sharma',
       phone: '+91 98111 22233',
-      streetAddress: 'Villa 14, Palm Meadows, Whitefield',
-      landmark: 'Near Forum Value Mall',
-      city: 'Bengaluru',
-      state: 'Karnataka',
-      postalCode: '560066',
-      latitude: 12.9698,
-      longitude: 77.7499,
-      isDefault: true,
-    },
-  });
-
-  // 5. Delivery Partners
-  const driverUser1 = await prisma.user.create({
-    data: {
-      email: 'arjun.driver@quickbite.com',
-      passwordHash: commonPasswordHash,
-      name: 'Arjun Kumar',
-      phone: '+91 91234 56789',
-      role: 'DELIVERY_PARTNER',
-      isActive: true,
-      avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
-    },
-  });
-
-  const driver1Profile = await prisma.deliveryPartnerProfile.create({
-    data: {
-      userId: driverUser1.id,
-      vehicleType: 'MOTORBIKE',
-      vehicleNumber: 'KA-01-EQ-4421',
-      licenseNumber: 'DL-2021-00984',
-      isOnline: true,
-      isAvailable: true,
-      currentLatitude: 12.9735,
-      currentLongitude: 77.5992,
-      rating: 4.9,
-      totalDeliveries: 142,
-      totalEarnings: 6390.0,
-    },
-  });
-
-  const driverUser2 = await prisma.user.create({
-    data: {
-      email: 'kiran.driver@quickbite.com',
-      passwordHash: commonPasswordHash,
-      name: 'Kiran Reddy',
-      phone: '+91 92345 67890',
-      role: 'DELIVERY_PARTNER',
-      isActive: true,
-      avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150',
-    },
-  });
-
-  const driver2Profile = await prisma.deliveryPartnerProfile.create({
-    data: {
-      userId: driverUser2.id,
-      vehicleType: 'SCOOTER',
-      vehicleNumber: 'KA-05-MK-8819',
-      licenseNumber: 'DL-2022-11452',
-      isOnline: true,
-      isAvailable: true,
-      currentLatitude: 12.9680,
-      currentLongitude: 77.5910,
-      rating: 4.8,
-      totalDeliveries: 98,
-      totalEarnings: 4410.0,
-    },
-  });
-
-  const driverUser3 = await prisma.user.create({
-    data: {
-      email: 'ravi.driver@quickbite.com',
-      passwordHash: commonPasswordHash,
-      name: 'Ravi Verma',
-      phone: '+91 93456 78901',
-      role: 'DELIVERY_PARTNER',
-      isActive: true,
-      avatarUrl: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=150',
-    },
-  });
-
-  await prisma.deliveryPartnerProfile.create({
-    data: {
-      userId: driverUser3.id,
-      vehicleType: 'BICYCLE',
-      vehicleNumber: 'CY-BLR-041',
-      licenseNumber: 'DL-2023-44102',
-      isOnline: false,
-      isAvailable: true,
-      currentLatitude: 12.9650,
-      currentLongitude: 77.6080,
-      rating: 4.7,
-      totalDeliveries: 45,
-      totalEarnings: 2025.0,
-    },
-  });
-
-  // 6. Restaurants & Restaurant Owners
-  // Restaurant 1: Pizza Hub
-  const owner1 = await prisma.user.create({
-    data: {
-      email: 'owner@pizzahub.com',
-      passwordHash: commonPasswordHash,
-      name: 'Marco Rossi',
-      phone: '+91 98888 11111',
-      role: 'RESTAURANT',
-      isActive: true,
-      avatarUrl: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=150',
-    },
-  });
-
-  const restPizzaHub = await prisma.restaurant.create({
-    data: {
-      name: 'Pizza Hub & Italian Trattoria',
-      slug: 'pizza-hub-italian-trattoria',
-      description: 'Artisanal wood-fired sourdough pizzas, fresh hand-rolled pasta, and authentic Italian gelato.',
-      phone: '+91 80 4123 9999',
-      email: 'info@pizzahub.com',
-      logoUrl: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=200',
-      bannerUrl: 'https://images.unsplash.com/photo-1579684947550-22e945225d9a?w=1200',
-      address: '88 Brigade Road, Ashok Nagar',
-      city: 'Bengaluru',
-      state: 'Karnataka',
-      postalCode: '560025',
-      latitude: 12.9725,
-      longitude: 77.6075,
-      isOpen: true,
-      isFeatured: true,
-      cuisineTypes: 'Italian, Pizza, Pasta, European',
-      priceRange: '$$',
-      rating: 4.8,
-      totalRatings: 342,
-      avgPrepTimeMinutes: 20,
-      deliveryFee: 40.0,
-      minOrderAmount: 150.0,
-      commissionRate: 0.15,
-      totalRevenue: 42500.0,
-    },
-  });
-
-  await prisma.restaurantStaff.create({
-    data: { userId: owner1.id, restaurantId: restPizzaHub.id, role: 'OWNER' },
-  });
-
-  // Menu categories and items for Pizza Hub
-  const catPizzas = await prisma.foodCategory.create({
-    data: { restaurantId: restPizzaHub.id, name: 'Wood-Fired Pizzas', slug: 'wood-fired-pizzas', displayOrder: 1 },
-  });
-  const catPastas = await prisma.foodCategory.create({
-    data: { restaurantId: restPizzaHub.id, name: 'Handcrafted Pastas', slug: 'handcrafted-pastas', displayOrder: 2 },
-  });
-  const catSides = await prisma.foodCategory.create({
-    data: { restaurantId: restPizzaHub.id, name: 'Sides & Beverages', slug: 'sides-beverages', displayOrder: 3 },
-  });
-
-  const pizzaItemMargherita = await prisma.foodItem.create({
-    data: {
-      restaurantId: restPizzaHub.id,
-      categoryId: catPizzas.id,
-      name: 'Classic Margherita Napoletana',
-      description: 'San Marzano tomato sauce, fresh buffalo mozzarella, fragrant sweet basil, and extra virgin olive oil.',
-      price: 349.0,
-      discountPrice: 299.0,
-      imageUrl: 'https://images.unsplash.com/photo-1604382355076-af4b0eb60143?w=500',
-      isVegetarian: true,
-      isBestSeller: true,
-      prepTimeMinutes: 18,
-      calories: 780,
-      displayOrder: 1,
-    },
-  });
-
-  const pizzaItemPepperoni = await prisma.foodItem.create({
-    data: {
-      restaurantId: restPizzaHub.id,
-      categoryId: catPizzas.id,
-      name: 'Spicy Smoked Pepperoni Feast',
-      description: 'Loaded with imported artisanal pepperoni, shredded mozzarella, spicy jalapeños, and hot honey drizzle.',
-      price: 499.0,
-      imageUrl: 'https://images.unsplash.com/photo-1628840042765-356cda07504e?w=500',
-      isVegetarian: false,
-      isSpicy: true,
-      isBestSeller: true,
-      prepTimeMinutes: 20,
-      calories: 950,
-      displayOrder: 2,
-    },
-  });
-
-  const pizzaItemTruffleMushroom = await prisma.foodItem.create({
-    data: {
-      restaurantId: restPizzaHub.id,
-      categoryId: catPizzas.id,
-      name: 'Wild Truffle & Shiitake Mushroom Pizza',
-      description: 'Roasted forest mushrooms, creamy fontina cheese, thyme, and fragrant black truffle oil on a crispy crust.',
-      price: 449.0,
-      imageUrl: 'https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=500',
-      isVegetarian: true,
-      prepTimeMinutes: 20,
-      calories: 820,
-      displayOrder: 3,
-    },
-  });
-
-  await prisma.foodItem.create({
-    data: {
-      restaurantId: restPizzaHub.id,
-      categoryId: catPastas.id,
-      name: 'Creamy Fettuccine Alfredo',
-      description: 'Tossed in rich aged Parmigiano Reggiano butter sauce with crushed garlic and cracked black pepper.',
-      price: 379.0,
-      imageUrl: 'https://images.unsplash.com/photo-1645112411341-6c4fd023714a?w=500',
-      isVegetarian: true,
-      prepTimeMinutes: 15,
-      calories: 680,
-      displayOrder: 1,
-    },
-  });
-
-  await prisma.foodItem.create({
-    data: {
-      restaurantId: restPizzaHub.id,
-      categoryId: catSides.id,
-      name: 'Cheesy Stuffed Garlic Bread',
-      description: 'Freshly baked sourdough baguettes stuffed with gooey mozzarella and herb butter dip.',
-      price: 189.0,
-      imageUrl: 'https://images.unsplash.com/photo-1619860860774-1e2e17343432?w=500',
-      isVegetarian: true,
-      prepTimeMinutes: 12,
-      calories: 420,
-      displayOrder: 1,
-    },
-  });
-
-  // Restaurant 2: Burger Craft
-  const owner2 = await prisma.user.create({
-    data: {
-      email: 'owner@burgercraft.com',
-      passwordHash: commonPasswordHash,
-      name: 'Chef David Miller',
-      phone: '+91 98888 22222',
-      role: 'RESTAURANT',
-      isActive: true,
-      avatarUrl: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150',
-    },
-  });
-
-  const restBurgerCraft = await prisma.restaurant.create({
-    data: {
-      name: 'Burger Craft & Shake Lab',
-      slug: 'burger-craft-shake-lab',
-      description: 'Gourmet smashed beef burgers, crispy peri-peri chicken stacks, and thick Belgian monster milkshakes.',
-      phone: '+91 80 4222 8888',
-      email: 'info@burgercraft.com',
-      logoUrl: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=200',
-      bannerUrl: 'https://images.unsplash.com/photo-1550547660-d9450f859349?w=1200',
-      address: '42 Indiranagar 100ft Road',
+      streetAddress: 'Villa 14, Palm Meadows, Indiranagar',
+      landmark: 'Near 100 Feet Road',
       city: 'Bengaluru',
       state: 'Karnataka',
       postalCode: '560038',
       latitude: 12.9784,
       longitude: 77.6408,
-      isOpen: true,
-      isFeatured: true,
-      cuisineTypes: 'Burgers, American, Fast Food, Shakes',
-      priceRange: '$$',
-      rating: 4.7,
-      totalRatings: 289,
-      avgPrepTimeMinutes: 18,
-      deliveryFee: 35.0,
-      minOrderAmount: 120.0,
-      commissionRate: 0.15,
-      totalRevenue: 38200.0,
+      isDefault: true,
     },
   });
 
-  await prisma.restaurantStaff.create({
-    data: { userId: owner2.id, restaurantId: restBurgerCraft.id, role: 'OWNER' },
-  });
+  // 8. DATABASE-BACKED ZAVORA FOOD CATEGORIES
+  const categoryDefs = [
+    { name: 'Pizza', slug: 'pizza', displayOrder: 1 },
+    { name: 'Burgers', slug: 'burgers', displayOrder: 2 },
+    { name: 'Biryani', slug: 'biryani', displayOrder: 3 },
+    { name: 'South Indian', slug: 'south-indian', displayOrder: 4 },
+    { name: 'North Indian', slug: 'north-indian', displayOrder: 5 },
+    { name: 'Chinese', slug: 'chinese', displayOrder: 6 },
+    { name: 'Snacks', slug: 'snacks', displayOrder: 7 },
+    { name: 'Desserts', slug: 'desserts', displayOrder: 8 },
+    { name: 'Beverages', slug: 'beverages', displayOrder: 9 },
+  ];
 
-  const catBurgers = await prisma.foodCategory.create({
-    data: { restaurantId: restBurgerCraft.id, name: 'Signature Smashed Burgers', slug: 'signature-smashed-burgers', displayOrder: 1 },
-  });
-  const catShakes = await prisma.foodCategory.create({
-    data: { restaurantId: restBurgerCraft.id, name: 'Thick Monster Shakes', slug: 'thick-monster-shakes', displayOrder: 2 },
-  });
+  const categories: Record<string, any> = {};
+  for (const c of categoryDefs) {
+    const created = await prisma.foodCategory.create({
+      data: {
+        restaurantId: zavoraRestaurant.id,
+        name: c.name,
+        slug: c.slug,
+        displayOrder: c.displayOrder,
+        isActive: true,
+      },
+    });
+    categories[c.slug] = created;
+  }
 
-  await prisma.foodItem.create({
-    data: {
-      restaurantId: restBurgerCraft.id,
-      categoryId: catBurgers.id,
-      name: 'The Ultimate Double Smashed Cheeseburger',
-      description: 'Double tender patties smashed with caramelized onions, American cheddar cheese, dill pickles, and secret house sauce in brioche buns.',
-      price: 329.0,
+  // 9. DATABASE-BACKED ZAVORA FOOD ITEMS (Realistic, High Quality, Database-Driven)
+  const foodItemDefs = [
+    // --- PIZZA ---
+    {
+      cat: 'pizza',
+      name: 'Artisanal Margherita Pizza',
+      description: 'Hand-stretched sourdough crust, San Marzano tomato sauce, fresh buffalo mozzarella, aromatic sweet basil, extra virgin olive oil.',
+      price: 320.0,
       discountPrice: 289.0,
-      imageUrl: 'https://images.unsplash.com/photo-1586190848861-99aa4a171e90?w=500',
+      imageUrl: 'https://images.unsplash.com/photo-1604382355076-af4b0eb60143?w=500',
+      isVegetarian: true,
+      isBestSeller: true,
+      prepTimeMinutes: 18,
+      calories: 780,
+    },
+    {
+      cat: 'pizza',
+      name: 'Truffle Wild Mushroom Pizza',
+      description: 'Wood-fired sourdough with roasted shiitake and button mushrooms, white truffle oil, fior di latte, and shaved parmesan.',
+      price: 420.0,
+      discountPrice: 380.0,
+      imageUrl: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=500',
+      isVegetarian: true,
+      isBestSeller: false,
+      prepTimeMinutes: 20,
+      calories: 840,
+    },
+    {
+      cat: 'pizza',
+      name: 'Spicy Peri Peri Paneer Pizza',
+      description: 'House-marinated charred paneer cubes, roasted red paprika, crunchy bell peppers, spicy peri peri drizzle, mozzarella.',
+      price: 360.0,
+      discountPrice: null,
+      imageUrl: 'https://images.unsplash.com/photo-1593560708920-61dd98c46a4e?w=500',
+      isVegetarian: true,
+      isSpicy: true,
+      isBestSeller: true,
+      prepTimeMinutes: 18,
+      calories: 890,
+    },
+    {
+      cat: 'pizza',
+      name: 'Smokehouse BBQ Chicken Pizza',
+      description: 'Hickory-smoked pulled chicken breast, caramelized onions, smoked gouda, tangy BBQ sauce glaze, fresh cilantro.',
+      price: 440.0,
+      discountPrice: 399.0,
+      imageUrl: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=500',
+      isVegetarian: false,
+      isBestSeller: true,
+      prepTimeMinutes: 22,
+      calories: 950,
+    },
+
+    // --- BURGERS ---
+    {
+      cat: 'burgers',
+      name: 'Classic Zavora Smashed Cheeseburger',
+      description: 'Two smashed patties grilled with crispy crust edges, double American cheddar, pickles, secret burger sauce on toasted brioche.',
+      price: 240.0,
+      discountPrice: 219.0,
+      imageUrl: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500',
       isVegetarian: false,
       isBestSeller: true,
       prepTimeMinutes: 15,
-      calories: 890,
-      displayOrder: 1,
+      calories: 680,
     },
-  });
-
-  await prisma.foodItem.create({
-    data: {
-      restaurantId: restBurgerCraft.id,
-      categoryId: catBurgers.id,
-      name: 'Crispy Peri-Peri Fried Chicken Burger',
-      description: 'Golden fried chicken breast tossed in spicy African peri-peri glaze, crunchy purple cabbage slaw, and chipotle mayo.',
-      price: 299.0,
-      imageUrl: 'https://images.unsplash.com/photo-1625813506062-0aeb1d7a094b?w=500',
-      isVegetarian: false,
-      isSpicy: true,
-      prepTimeMinutes: 16,
-      calories: 740,
-      displayOrder: 2,
-    },
-  });
-
-  await prisma.foodItem.create({
-    data: {
-      restaurantId: restBurgerCraft.id,
-      categoryId: catShakes.id,
-      name: 'Nutella Ferrero Rocher Shake',
-      description: 'Rich Belgian chocolate shake blended with genuine Nutella spread, whole hazelnuts, and topped with whipped cream.',
-      price: 229.0,
-      imageUrl: 'https://images.unsplash.com/photo-1572490122747-3968b75cc699?w=500',
+    {
+      cat: 'burgers',
+      name: 'Crispy Zesty Paneer Burger',
+      description: 'Golden spiced panko-crusted paneer block, crunchy lettuce, pickled red onions, mint chipotle mayo on toasted potato bun.',
+      price: 210.0,
+      discountPrice: null,
+      imageUrl: 'https://images.unsplash.com/photo-1550547660-d9450f859349?w=500',
       isVegetarian: true,
-      prepTimeMinutes: 8,
-      calories: 540,
-      displayOrder: 1,
+      isBestSeller: false,
+      prepTimeMinutes: 14,
+      calories: 610,
     },
-  });
-
-  // Restaurant 3: Royal Biryani Darbar
-  const restBiryani = await prisma.restaurant.create({
-    data: {
-      name: 'Royal Dum Biryani Darbar',
-      slug: 'royal-dum-biryani-darbar',
-      description: 'Slow-cooked royal Hyderabadi and Lucknowi dum biryanis made with long-grain basmati and secret Mughal spices.',
-      phone: '+91 80 4333 7777',
-      email: 'biryani@royalbiryani.com',
-      logoUrl: 'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=200',
-      bannerUrl: 'https://images.unsplash.com/photo-1589302168068-964664d93dc0?w=1200',
-      address: '15 Koramangala 5th Block',
-      city: 'Bengaluru',
-      state: 'Karnataka',
-      postalCode: '560095',
-      latitude: 12.9352,
-      longitude: 77.6245,
-      isOpen: true,
-      isFeatured: true,
-      cuisineTypes: 'Biryani, Mughlai, North Indian, Kebabs',
-      priceRange: '$$',
-      rating: 4.9,
-      totalRatings: 512,
-      avgPrepTimeMinutes: 25,
-      deliveryFee: 40.0,
-      minOrderAmount: 200.0,
-      commissionRate: 0.15,
-      totalRevenue: 76000.0,
-    },
-  });
-
-  const catBiryani = await prisma.foodCategory.create({
-    data: { restaurantId: restBiryani.id, name: 'Royal Dum Biryanis', slug: 'royal-dum-biryanis', displayOrder: 1 },
-  });
-
-  await prisma.foodItem.create({
-    data: {
-      restaurantId: restBiryani.id,
-      categoryId: catBiryani.id,
-      name: 'Hyderabadi Special Dum Chicken Biryani',
-      description: 'Fragrant saffron basmati rice layered with succulent tender chicken cuts slow-cooked in traditional copper handi with raita and mirchi ka salan.',
-      price: 369.0,
-      discountPrice: 329.0,
-      imageUrl: 'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=500',
+    {
+      cat: 'burgers',
+      name: 'Grilled Chicken Jalapeno Burger',
+      description: 'Herbed grilled chicken breast, spicy pickled jalapenos, melted Swiss cheese, smoky chipotle aioli, crispy lettuce.',
+      price: 260.0,
+      discountPrice: 235.0,
+      imageUrl: 'https://images.unsplash.com/photo-1586190848861-99aa4a171e90?w=500',
       isVegetarian: false,
       isSpicy: true,
       isBestSeller: true,
-      prepTimeMinutes: 20,
-      calories: 920,
-      displayOrder: 1,
+      prepTimeMinutes: 16,
+      calories: 640,
     },
-  });
+    {
+      cat: 'burgers',
+      name: 'Double Truffle Bacon Burger',
+      description: 'Double grilled tender patties, crispy bacon rashers, truffle mushroom duxelles, aged cheddar, garlic herb butter.',
+      price: 320.0,
+      discountPrice: null,
+      imageUrl: 'https://images.unsplash.com/photo-1572802419224-296b0aeee0d9?w=500',
+      isVegetarian: false,
+      isBestSeller: false,
+      prepTimeMinutes: 18,
+      calories: 820,
+    },
 
-  await prisma.foodItem.create({
-    data: {
-      restaurantId: restBiryani.id,
-      categoryId: catBiryani.id,
-      name: 'Paneer Tikka Dum Biryani',
-      description: 'Char-grilled cottage cheese cubes layered with spiced basmati rice, caramelized mint, and fried cashews.',
-      price: 319.0,
+    // --- BIRYANI ---
+    {
+      cat: 'biryani',
+      name: 'Royal Dum Chicken Biryani',
+      description: 'Long-grain aged basmati rice layered with tender marinated chicken, saffron milk, fried onions (birista), served with salan and raita.',
+      price: 340.0,
+      discountPrice: 299.0,
+      imageUrl: 'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=500',
+      isVegetarian: false,
+      isBestSeller: true,
+      prepTimeMinutes: 20,
+      calories: 850,
+    },
+    {
+      cat: 'biryani',
+      name: 'Nizam Mutton Handi Biryani',
+      description: 'Succulent baby goat meat slow-cooked on charcoal dum with royal whole spices, saffron kewra water, served in a sealed handi.',
+      price: 460.0,
+      discountPrice: null,
+      imageUrl: 'https://images.unsplash.com/photo-1589302168068-964664d93dc0?w=500',
+      isVegetarian: false,
+      isBestSeller: true,
+      prepTimeMinutes: 25,
+      calories: 920,
+    },
+    {
+      cat: 'biryani',
+      name: 'Lucknowi Subz Dum Biryani',
+      description: 'Aromatic basmati rice layered with garden vegetables, paneer cubes, cashews, raisins, and delicate Awadhi fragrant herbs.',
+      price: 280.0,
+      discountPrice: 249.0,
       imageUrl: 'https://images.unsplash.com/photo-1633945274405-b6c8069047b0?w=500',
       isVegetarian: true,
+      isBestSeller: false,
       prepTimeMinutes: 18,
-      calories: 780,
-      displayOrder: 2,
+      calories: 680,
     },
-  });
 
-  // Restaurant 4: Spice Route North Indian
-  const restNorthIndian = await prisma.restaurant.create({
-    data: {
-      name: 'Spice Route North Indian & Tandoor',
-      slug: 'spice-route-north-indian-tandoor',
-      description: 'Traditional slow-simmered Punjabi gravies, butter chicken, rich dal makhani, and clay oven tandoori rotis.',
-      phone: '+91 80 4444 6666',
-      email: 'spiceroute@quickbite.com',
-      logoUrl: 'https://images.unsplash.com/photo-1588166524941-3bf61a9c41db?w=200',
-      bannerUrl: 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=1200',
-      address: '24 MG Road, Central Business District',
-      city: 'Bengaluru',
-      state: 'Karnataka',
-      postalCode: '560001',
-      latitude: 12.9750,
-      longitude: 77.6050,
-      isOpen: true,
-      isFeatured: true,
-      cuisineTypes: 'North Indian, Mughlai, Punjabi, Tandoor',
-      priceRange: '$$',
-      rating: 4.8,
-      totalRatings: 420,
-      avgPrepTimeMinutes: 22,
-      deliveryFee: 35.0,
-      minOrderAmount: 180.0,
-      commissionRate: 0.15,
-      totalRevenue: 54000.0,
+    // --- SOUTH INDIAN ---
+    {
+      cat: 'south-indian',
+      name: 'Ghee Roast Masala Dosa',
+      description: 'Crispy golden crepe roasted generously with pure cow ghee, stuffed with spiced potato masala, served with 3 chutneys & sambar.',
+      price: 140.0,
+      discountPrice: 125.0,
+      imageUrl: 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=500',
+      isVegetarian: true,
+      isBestSeller: true,
+      prepTimeMinutes: 12,
+      calories: 420,
     },
-  });
+    {
+      cat: 'south-indian',
+      name: 'Steamed Button Idli Vada Platter',
+      description: 'Pair of pillowy soft steamed rice idlis and crispy medu vada served with hot vegetable drumstick sambar and fresh coconut chutney.',
+      price: 120.0,
+      discountPrice: null,
+      imageUrl: 'https://images.unsplash.com/photo-1626074353765-517a681e40be?w=500',
+      isVegetarian: true,
+      isBestSeller: false,
+      prepTimeMinutes: 10,
+      calories: 360,
+    },
+    {
+      cat: 'south-indian',
+      name: 'Mysore Rava Onion Dosa',
+      description: 'Crisp semolina crepe seasoned with green chillies, ginger, cracked black pepper, and generous topping of roasted onions.',
+      price: 160.0,
+      discountPrice: null,
+      imageUrl: 'https://images.unsplash.com/photo-1668236543090-82eba5ee5976?w=500',
+      isVegetarian: true,
+      isBestSeller: false,
+      prepTimeMinutes: 14,
+      calories: 440,
+    },
 
-  const catNorthCurries = await prisma.foodCategory.create({
-    data: { restaurantId: restNorthIndian.id, name: 'North Indian Curries', slug: 'north-indian-curries', displayOrder: 1 },
-  });
-  const catTandoor = await prisma.foodCategory.create({
-    data: { restaurantId: restNorthIndian.id, name: 'Tandoori Breads & Kebabs', slug: 'tandoori-breads-kebabs', displayOrder: 2 },
-  });
-
-  await prisma.foodItem.create({
-    data: {
-      restaurantId: restNorthIndian.id,
-      categoryId: catNorthCurries.id,
-      name: 'Royal Murgh Makhani (Butter Chicken)',
-      description: 'Charcoal-grilled chicken tikkas simmered in silky tomato, cashew, and fresh butter gravy with fenugreek.',
-      price: 389.0,
-      discountPrice: 349.0,
+    // --- NORTH INDIAN ---
+    {
+      cat: 'north-indian',
+      name: 'Butter Chicken Royale',
+      description: 'Charcoal-grilled boneless tandoori chicken simmered in rich creamy tomato, cashew nut gravy, flavored with kasoori methi.',
+      price: 360.0,
+      discountPrice: 329.0,
       imageUrl: 'https://images.unsplash.com/photo-1603894584373-5ac82b2ae398?w=500',
       isVegetarian: false,
       isBestSeller: true,
-      prepTimeMinutes: 20,
-      calories: 820,
-      displayOrder: 1,
+      prepTimeMinutes: 18,
+      calories: 720,
     },
-  });
-
-  await prisma.foodItem.create({
-    data: {
-      restaurantId: restNorthIndian.id,
-      categoryId: catNorthCurries.id,
-      name: 'Dal Makhani Slow-Simmered Overnight',
-      description: 'Whole black urad lentils slow-cooked for 16 hours on charcoal with pure ghee, cream, and ginger.',
-      price: 279.0,
+    {
+      cat: 'north-indian',
+      name: 'Paneer Butter Masala',
+      description: 'Fresh cottage cheese cubes folded in a silky, sweet & savoury spiced makhani gravy enriched with fresh dairy butter.',
+      price: 310.0,
+      discountPrice: null,
+      imageUrl: 'https://images.unsplash.com/photo-1631452180519-c014fe946bc7?w=500',
+      isVegetarian: true,
+      isBestSeller: true,
+      prepTimeMinutes: 16,
+      calories: 640,
+    },
+    {
+      cat: 'north-indian',
+      name: 'Dal Makhani Slow-Simmered',
+      description: 'Whole black lentils and kidney beans slow-cooked overnight with churned butter and cream for authentic velvety richness.',
+      price: 260.0,
+      discountPrice: 229.0,
       imageUrl: 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=500',
       isVegetarian: true,
-      isBestSeller: true,
+      isBestSeller: false,
       prepTimeMinutes: 15,
-      calories: 610,
-      displayOrder: 2,
-    },
-  });
-
-  await prisma.foodItem.create({
-    data: {
-      restaurantId: restNorthIndian.id,
-      categoryId: catTandoor.id,
-      name: 'Butter Garlic Naan (2 Pcs)',
-      description: 'Hand-stretched leavened flatbread brushed with crushed roasted garlic, fresh cilantro, and melted butter.',
-      price: 119.0,
-      imageUrl: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=500',
-      isVegetarian: true,
-      prepTimeMinutes: 10,
-      calories: 320,
-      displayOrder: 1,
-    },
-  });
-
-  // Restaurant 5: Dosa Junction South Indian
-  const restSouthIndian = await prisma.restaurant.create({
-    data: {
-      name: 'Dosa Junction & Filter Coffee',
-      slug: 'dosa-junction-filter-coffee',
-      description: 'Crispy golden ghee roast dosas, steamed fluffy idlis, crunchy medu vadas, and authentic Kumbakonam degree filter coffee.',
-      phone: '+91 80 4555 3333',
-      email: 'dosajunction@quickbite.com',
-      logoUrl: 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=200',
-      bannerUrl: 'https://images.unsplash.com/photo-1668236543090-82eba5ee5976?w=1200',
-      address: '77 Malleshwaram 8th Cross',
-      city: 'Bengaluru',
-      state: 'Karnataka',
-      postalCode: '560003',
-      latitude: 13.0031,
-      longitude: 77.5684,
-      isOpen: true,
-      isFeatured: true,
-      cuisineTypes: 'South Indian, Vegetarian, Breakfast, Snacks, Beverages',
-      priceRange: '$',
-      rating: 4.9,
-      totalRatings: 630,
-      avgPrepTimeMinutes: 15,
-      deliveryFee: 30.0,
-      minOrderAmount: 100.0,
-      commissionRate: 0.15,
-      totalRevenue: 68000.0,
-    },
-  });
-
-  const catDosas = await prisma.foodCategory.create({
-    data: { restaurantId: restSouthIndian.id, name: 'South Indian Specials', slug: 'south-indian-specials', displayOrder: 1 },
-  });
-  const catBeverages = await prisma.foodCategory.create({
-    data: { restaurantId: restSouthIndian.id, name: 'Beverages & Filter Coffee', slug: 'beverages-filter-coffee', displayOrder: 2 },
-  });
-
-  await prisma.foodItem.create({
-    data: {
-      restaurantId: restSouthIndian.id,
-      categoryId: catDosas.id,
-      name: 'Benne Ghee Roast Masala Dosa',
-      description: 'Crispy fermented rice crepe roasted in aromatic country butter (benne), stuffed with spiced potato mash, served with 3 chutneys and piping hot drumstick sambar.',
-      price: 189.0,
-      discountPrice: 159.0,
-      imageUrl: 'https://images.unsplash.com/photo-1668236543090-82eba5ee5976?w=500',
-      isVegetarian: true,
-      isBestSeller: true,
-      prepTimeMinutes: 12,
       calories: 520,
-      displayOrder: 1,
     },
-  });
-
-  await prisma.foodItem.create({
-    data: {
-      restaurantId: restSouthIndian.id,
-      categoryId: catDosas.id,
-      name: 'Ghee Podi Idli Platter (4 Pcs)',
-      description: 'Mini steamed rice cakes tossed in fiery spicy gunpowder podi masala and sizzling desi ghee.',
-      price: 149.0,
-      imageUrl: 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=500',
+    {
+      cat: 'north-indian',
+      name: 'Garlic Butter Naan (2 pcs)',
+      description: 'Soft tandoori leavened flatbread brushed with roasted minced garlic, melted butter, and fresh coriander leaves.',
+      price: 90.0,
+      discountPrice: null,
+      imageUrl: 'https://images.unsplash.com/photo-1626074353765-517a681e40be?w=500',
       isVegetarian: true,
-      prepTimeMinutes: 10,
-      calories: 380,
-      displayOrder: 2,
+      isBestSeller: false,
+      prepTimeMinutes: 8,
+      calories: 310,
     },
-  });
 
-  await prisma.foodItem.create({
-    data: {
-      restaurantId: restSouthIndian.id,
-      categoryId: catBeverages.id,
-      name: 'Authentic Madras Filter Coffee (Double Shot)',
-      description: 'Freshly brewed chicory coffee decoction frothed with boiled whole milk in brass davarah-tumbler set.',
-      price: 79.0,
-      imageUrl: 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=500',
-      isVegetarian: true,
-      prepTimeMinutes: 5,
-      calories: 110,
-      displayOrder: 1,
-    },
-  });
-
-  // Restaurant 6: Dragon Wok Chinese & Dim Sum
-  const restChinese = await prisma.restaurant.create({
-    data: {
-      name: 'Dragon Wok Chinese & Dim Sum Lab',
-      slug: 'dragon-wok-chinese-dim-sum-lab',
-      description: 'Steamed translucent dim sums, fiery Hakka noodles, crispy spring rolls, and wok-tossed Schezwan fried rice.',
-      phone: '+91 80 4666 2222',
-      email: 'dragonwok@quickbite.com',
-      logoUrl: 'https://images.unsplash.com/photo-1541696432-82c6da8ce7bf?w=200',
-      bannerUrl: 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=1200',
-      address: '90 Lavelle Road, Shanthala Nagar',
-      city: 'Bengaluru',
-      state: 'Karnataka',
-      postalCode: '560001',
-      latitude: 12.9710,
-      longitude: 77.5990,
-      isOpen: true,
-      isFeatured: true,
-      cuisineTypes: 'Chinese, Asian, Dim Sum, Noodles',
-      priceRange: '$$',
-      rating: 4.7,
-      totalRatings: 380,
-      avgPrepTimeMinutes: 18,
-      deliveryFee: 35.0,
-      minOrderAmount: 150.0,
-      commissionRate: 0.15,
-      totalRevenue: 49000.0,
-    },
-  });
-
-  const catChinese = await prisma.foodCategory.create({
-    data: { restaurantId: restChinese.id, name: 'Chinese Noodles & Dim Sum', slug: 'chinese-noodles-dim-sum', displayOrder: 1 },
-  });
-
-  await prisma.foodItem.create({
-    data: {
-      restaurantId: restChinese.id,
-      categoryId: catChinese.id,
-      name: 'Crispy Veg Spring Rolls with Sweet Chilli (6 Pcs)',
-      description: 'Golden fried crispy pastry rolls filled with shredded cabbage, carrots, scallions, and glass noodles.',
-      price: 199.0,
-      imageUrl: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=500',
-      isVegetarian: true,
-      prepTimeMinutes: 12,
-      calories: 340,
-      displayOrder: 1,
-    },
-  });
-
-  await prisma.foodItem.create({
-    data: {
-      restaurantId: restChinese.id,
-      categoryId: catChinese.id,
-      name: 'Fiery Schezwan Chilli Garlic Noodles',
-      description: 'Wok-tossed handmade wheat noodles with roasted red chillies, bell peppers, spring onions, and spicy Schezwan oil.',
-      price: 249.0,
+    // --- CHINESE ---
+    {
+      cat: 'chinese',
+      name: 'Hakka Chilli Garlic Noodles',
+      description: 'Wok-tossed egg noodles with shredded seasonal vegetables, burnt garlic bits, scallions, and dark soy chilli glaze.',
+      price: 220.0,
+      discountPrice: 199.0,
       imageUrl: 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=500',
       isVegetarian: true,
       isSpicy: true,
+      isBestSeller: true,
+      prepTimeMinutes: 14,
+      calories: 540,
+    },
+    {
+      cat: 'chinese',
+      name: 'Steamed Chicken Dim Sums (6 pcs)',
+      description: 'Delicate translucent wheat wrappers packed with juicy minced chicken and scallions, served with spicy Sichuan dip.',
+      price: 260.0,
+      discountPrice: null,
+      imageUrl: 'https://images.unsplash.com/photo-1496116218417-1a781b1c416c?w=500',
+      isVegetarian: false,
+      isBestSeller: true,
       prepTimeMinutes: 15,
-      calories: 580,
-      displayOrder: 2,
+      calories: 380,
     },
-  });
-
-  // Restaurant 7: Green Earth Healthy Superfoods & Desserts
-  const restHealthy = await prisma.restaurant.create({
-    data: {
-      name: 'Green Earth Healthy Bowls & Desserts',
-      slug: 'green-earth-healthy-bowls-desserts',
-      description: 'Nutrient-rich protein superfood bowls, cold-pressed fruit elixirs, organic quinoa salads, and sugar-free desserts.',
-      phone: '+91 80 4777 1111',
-      email: 'greenearth@quickbite.com',
-      logoUrl: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=200',
-      bannerUrl: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=1200',
-      address: '12 Richmond Town, Victoria Road',
-      city: 'Bengaluru',
-      state: 'Karnataka',
-      postalCode: '560047',
-      latitude: 12.9655,
-      longitude: 77.6105,
-      isOpen: true,
-      isFeatured: true,
-      cuisineTypes: 'Healthy, Salads, Desserts, Snacks, Beverages',
-      priceRange: '$$',
-      rating: 4.8,
-      totalRatings: 290,
-      avgPrepTimeMinutes: 15,
-      deliveryFee: 35.0,
-      minOrderAmount: 150.0,
-      commissionRate: 0.15,
-      totalRevenue: 34000.0,
+    {
+      cat: 'chinese',
+      name: 'Crispy Honey Chilli Paneer',
+      description: 'Battered crispy cottage cheese fingers tossed with sesame seeds, honey, hot chilli paste, and crunchy bell peppers.',
+      price: 240.0,
+      discountPrice: null,
+      imageUrl: 'https://images.unsplash.com/photo-1525755662778-989d0524087e?w=500',
+      isVegetarian: true,
+      isBestSeller: false,
+      prepTimeMinutes: 14,
+      calories: 590,
     },
-  });
 
-  const catHealthy = await prisma.foodCategory.create({
-    data: { restaurantId: restHealthy.id, name: 'Healthy Superfood Bowls', slug: 'healthy-superfood-bowls', displayOrder: 1 },
-  });
-  const catDesserts = await prisma.foodCategory.create({
-    data: { restaurantId: restHealthy.id, name: 'Artisanal Desserts & Snacks', slug: 'artisanal-desserts-snacks', displayOrder: 2 },
-  });
+    // --- SNACKS ---
+    {
+      cat: 'snacks',
+      name: 'Loaded Cheese Peri Peri Fries',
+      description: 'Golden crispy potato skin-on fries tossed in house peri-peri spice dust and smothered in warm jalapeno cheese sauce.',
+      price: 160.0,
+      discountPrice: 139.0,
+      imageUrl: 'https://images.unsplash.com/photo-1576107232684-1279f3908594?w=500',
+      isVegetarian: true,
+      isBestSeller: true,
+      prepTimeMinutes: 10,
+      calories: 480,
+    },
+    {
+      cat: 'snacks',
+      name: 'Chicken Popcorn Bites',
+      description: 'Tender bite-sized chicken pieces coated in seasoned buttermilk batter, fried extra crunchy, served with garlic mayo dip.',
+      price: 190.0,
+      discountPrice: null,
+      imageUrl: 'https://images.unsplash.com/photo-1562967914-608f82629710?w=500',
+      isVegetarian: false,
+      isBestSeller: true,
+      prepTimeMinutes: 12,
+      calories: 450,
+    },
 
-  await prisma.foodItem.create({
-    data: {
-      restaurantId: restHealthy.id,
-      categoryId: catHealthy.id,
-      name: 'Avocado & Grilled Paneer Power Bowl',
-      description: 'Hass avocado slices, organic tri-color quinoa, baby spinach, edamame beans, and roasted almond flakes with citrus dressing.',
-      price: 349.0,
-      discountPrice: 299.0,
-      imageUrl: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=500',
+    // --- DESSERTS ---
+    {
+      cat: 'desserts',
+      name: 'Warm Chocolate Lava Cake',
+      description: 'Decadent dark chocolate molten sponge cake with an oozing liquid ganache core, dusted with powdered sugar.',
+      price: 180.0,
+      discountPrice: 159.0,
+      imageUrl: 'https://images.unsplash.com/photo-1606313564200-e75d5e30476c?w=500',
       isVegetarian: true,
       isBestSeller: true,
       prepTimeMinutes: 12,
-      calories: 460,
-      displayOrder: 1,
-    },
-  });
-
-  await prisma.foodItem.create({
-    data: {
-      restaurantId: restHealthy.id,
-      categoryId: catDesserts.id,
-      name: 'Dark Chocolate Lava Cake with Berry Coulis',
-      description: 'Warm molten 70% Belgian dark chocolate cake with gooey center, fresh raspberries, and dusting of cocoa.',
-      price: 249.0,
-      imageUrl: 'https://images.unsplash.com/photo-1606313564200-e75d5e30476c?w=500',
-      isVegetarian: true,
-      prepTimeMinutes: 10,
       calories: 490,
-      displayOrder: 1,
     },
-  });
+    {
+      cat: 'desserts',
+      name: 'Royal Saffron Gulab Jamun (2 pcs)',
+      description: 'Soft melt-in-mouth milk solids dumplings soaked in warm rosewater and saffron sugar syrup, garnished with pistachios.',
+      price: 120.0,
+      discountPrice: null,
+      imageUrl: 'https://images.unsplash.com/photo-1599785209707-a456fc1337bb?w=500',
+      isVegetarian: true,
+      isBestSeller: false,
+      prepTimeMinutes: 8,
+      calories: 380,
+    },
 
-  // 7. Sample Orders for Testing and Demonstration
+    // --- BEVERAGES ---
+    {
+      cat: 'beverages',
+      name: 'Cold Brew Iced Latte',
+      description: '18-hour steep single-origin Arabica cold brew concentrate blended with chilled whole milk and mild Madagascar vanilla.',
+      price: 140.0,
+      discountPrice: null,
+      imageUrl: 'https://images.unsplash.com/photo-1517701550927-30cf4ba1dba5?w=500',
+      isVegetarian: true,
+      isBestSeller: true,
+      prepTimeMinutes: 5,
+      calories: 140,
+    },
+    {
+      cat: 'beverages',
+      name: 'Fresh Alphonso Mango Shake',
+      description: 'Thick creamy milkshake whipped with ripe Ratnagiri Alphonso mango pulp, condensed milk, and vanilla ice cream scoop.',
+      price: 150.0,
+      discountPrice: 129.0,
+      imageUrl: 'https://images.unsplash.com/photo-1570696516188-ade861b84a49?w=500',
+      isVegetarian: true,
+      isBestSeller: true,
+      prepTimeMinutes: 6,
+      calories: 280,
+    },
+    {
+      cat: 'beverages',
+      name: 'Virgin Mint Mojito Cooler',
+      description: 'Refreshing crushed garden mint leaves, muddled Persian limes, cane sugar syrup, topped with sparkling club soda.',
+      price: 130.0,
+      discountPrice: null,
+      imageUrl: 'https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?w=500',
+      isVegetarian: true,
+      isBestSeller: false,
+      prepTimeMinutes: 5,
+      calories: 110,
+    },
+  ];
 
-  // Sample Order 1: DELIVERED order with Customer Review
-  const deliveredOrder = await prisma.order.create({
-    data: {
-      orderNumber: 'QB-1001',
-      customerId: customer1.id,
-      restaurantId: restPizzaHub.id,
-      deliveryPartnerId: driver1Profile.id,
-      addressId: customer1AddressHome.id,
+  const createdFoodItems: any[] = [];
+  let orderIdx = 1;
+  for (const item of foodItemDefs) {
+    const category = categories[item.cat];
+    const created = await prisma.foodItem.create({
+      data: {
+        restaurantId: zavoraRestaurant.id,
+        categoryId: category.id,
+        name: item.name,
+        description: item.description,
+        price: item.price,
+        discountPrice: item.discountPrice,
+        imageUrl: item.imageUrl,
+        isAvailable: true,
+        isVegetarian: item.isVegetarian,
+        isSpicy: item.isSpicy || false,
+        isBestSeller: item.isBestSeller,
+        prepTimeMinutes: item.prepTimeMinutes,
+        calories: item.calories,
+        displayOrder: orderIdx++,
+      },
+    });
+    createdFoodItems.push(created);
+  }
+
+  console.log(`✅ Created ${createdFoodItems.length} database-backed food items across 9 categories.`);
+
+  // 10. REAL HISTORICAL ORDERS FOR DATABASE ANALYTICS
+  // Create 6 realistic delivered orders spread over past days so Super Admin analytics calculate genuine figures
+  const now = new Date();
+  const sampleOrdersData = [
+    {
+      orderNumber: 'ZV-1001',
+      customer: customer1,
+      items: [createdFoodItems[0], createdFoodItems[4]], // Margherita + Smashed Burger
       status: 'DELIVERED',
-      subtotal: 598.0,
-      taxAmount: 29.9,
-      deliveryFee: 0.0,
-      discountAmount: 100.0, // WELCOME100 applied
-      tipAmount: 30.0,
-      totalAmount: 557.9,
       paymentMethod: 'ONLINE_DEMO_PAY',
       paymentStatus: 'PAID',
-      deliveryAddressSnapshot: JSON.stringify({
-        label: 'Home',
-        recipientName: 'Alex Johnson',
-        phone: '+91 98765 43210',
-        streetAddress: customer1AddressHome.streetAddress,
-        city: customer1AddressHome.city,
-        state: customer1AddressHome.state,
-        postalCode: customer1AddressHome.postalCode,
-        latitude: customer1AddressHome.latitude,
-        longitude: customer1AddressHome.longitude,
-      }),
-      customerNotes: 'Please ring doorbell and leave at door',
-      placedAt: new Date(Date.now() - 3600000 * 3), // 3 hours ago
-      acceptedAt: new Date(Date.now() - 3600000 * 2.8),
-      readyAt: new Date(Date.now() - 3600000 * 2.5),
-      assignedAt: new Date(Date.now() - 3600000 * 2.4),
-      pickedUpAt: new Date(Date.now() - 3600000 * 2.2),
-      deliveredAt: new Date(Date.now() - 3600000 * 2.0),
-      items: {
-        create: [
-          {
-            foodItemId: pizzaItemMargherita.id,
-            name: pizzaItemMargherita.name,
-            quantity: 2,
-            unitPrice: 299.0,
-            totalPrice: 598.0,
-          },
-        ],
-      },
-      statusHistory: {
-        create: [
-          { status: 'PENDING', notes: 'Order placed by customer' },
-          { status: 'RESTAURANT_ACCEPTED', notes: 'Accepted with 20 min prep time' },
-          { status: 'PREPARING', notes: 'Chef is baking the pizza' },
-          { status: 'READY_FOR_PICKUP', notes: 'Boxed and ready' },
-          { status: 'DELIVERY_ASSIGNED', notes: 'Assigned to Arjun Kumar' },
-          { status: 'DELIVERY_ACCEPTED', notes: 'Driver accepted assignment' },
-          { status: 'PICKED_UP', notes: 'Driver picked up package' },
-          { status: 'ON_THE_WAY', notes: 'Out for delivery' },
-          { status: 'DELIVERED', notes: 'Package delivered at doorstep' },
-        ],
-      },
+      placedMinutesAgo: 180,
     },
-  });
-
-  // Review for Delivered Order
-  await prisma.restaurantReview.create({
-    data: {
-      restaurantId: restPizzaHub.id,
-      customerId: customer1.id,
-      orderId: deliveredOrder.id,
-      rating: 5,
-      comment: 'Super fast delivery and the Margherita was piping hot with genuine sourdough crust! 5 stars.',
-      replyFromRestaurant: 'Thank you Alex! We take huge pride in our wood-fired sourdough pizzas!',
-      isVerified: true,
-    },
-  });
-
-  // Sample Order 2: READY_FOR_PICKUP order (Ready for Admin Assignment demo!)
-  await prisma.order.create({
-    data: {
-      orderNumber: 'QB-1024',
-      customerId: customer1.id,
-      restaurantId: restPizzaHub.id,
-      addressId: customer1AddressWork.id,
-      status: 'READY_FOR_PICKUP',
-      subtotal: 499.0,
-      taxAmount: 25.0,
-      deliveryFee: 40.0,
-      discountAmount: 0.0,
-      tipAmount: 20.0,
-      totalAmount: 584.0,
-      paymentMethod: 'ONLINE_DEMO_PAY',
-      paymentStatus: 'PAID',
-      deliveryAddressSnapshot: JSON.stringify({
-        label: 'Work',
-        recipientName: 'Alex Johnson',
-        phone: '+91 98765 43210',
-        streetAddress: customer1AddressWork.streetAddress,
-        city: customer1AddressWork.city,
-        state: customer1AddressWork.state,
-        postalCode: customer1AddressWork.postalCode,
-        latitude: customer1AddressWork.latitude,
-        longitude: customer1AddressWork.longitude,
-      }),
-      customerNotes: 'Deliver to 5th floor reception',
-      placedAt: new Date(Date.now() - 1800000), // 30 mins ago
-      acceptedAt: new Date(Date.now() - 1500000),
-      readyAt: new Date(Date.now() - 300000), // 5 mins ago
-      items: {
-        create: [
-          {
-            foodItemId: pizzaItemPepperoni.id,
-            name: pizzaItemPepperoni.name,
-            quantity: 1,
-            unitPrice: 499.0,
-            totalPrice: 499.0,
-          },
-        ],
-      },
-      statusHistory: {
-        create: [
-          { status: 'PENDING', notes: 'Order placed by customer' },
-          { status: 'RESTAURANT_ACCEPTED', notes: 'Accepted by Pizza Hub' },
-          { status: 'PREPARING', notes: 'Food cooking in progress' },
-          { status: 'READY_FOR_PICKUP', notes: 'Packed and waiting for delivery partner assignment' },
-        ],
-      },
-    },
-  });
-
-  // Sample Order 3: ON_THE_WAY active order with live driver tracking
-  const onTheWayOrder = await prisma.order.create({
-    data: {
-      orderNumber: 'QB-1025',
-      customerId: customer2.id,
-      restaurantId: restPizzaHub.id,
-      deliveryPartnerId: driver2Profile.id,
-      addressId: customer1AddressHome.id,
-      status: 'ON_THE_WAY',
-      subtotal: 449.0,
-      taxAmount: 22.45,
-      deliveryFee: 40.0,
-      discountAmount: 0.0,
-      tipAmount: 0.0,
-      totalAmount: 511.45,
+    {
+      orderNumber: 'ZV-1002',
+      customer: customer2,
+      items: [createdFoodItems[8], createdFoodItems[23]], // Chicken Biryani + Mango Shake
+      status: 'DELIVERED',
       paymentMethod: 'CASH_ON_DELIVERY',
-      paymentStatus: 'PENDING',
-      deliveryAddressSnapshot: JSON.stringify({
-        label: 'Home',
-        recipientName: 'Priya Sharma',
-        phone: '+91 98111 22233',
-        streetAddress: 'Apartment 402, Prestige Towers, Residency Road',
-        city: 'Bengaluru',
-        state: 'Karnataka',
-        postalCode: '560025',
-        latitude: 12.9698,
-        longitude: 77.6033,
-      }),
-      placedAt: new Date(Date.now() - 2400000),
-      acceptedAt: new Date(Date.now() - 2000000),
-      readyAt: new Date(Date.now() - 1200000),
-      assignedAt: new Date(Date.now() - 1100000),
-      pickedUpAt: new Date(Date.now() - 600000),
-      items: {
-        create: [
-          {
-            foodItemId: pizzaItemTruffleMushroom.id,
-            name: pizzaItemTruffleMushroom.name,
-            quantity: 1,
-            unitPrice: 449.0,
-            totalPrice: 449.0,
-          },
-        ],
-      },
-      statusHistory: {
-        create: [
-          { status: 'PENDING', notes: 'Order placed' },
-          { status: 'RESTAURANT_ACCEPTED', notes: 'Accepted' },
-          { status: 'PREPARING', notes: 'In kitchen' },
-          { status: 'READY_FOR_PICKUP', notes: 'Ready' },
-          { status: 'DELIVERY_ASSIGNED', notes: 'Assigned to Kiran Reddy' },
-          { status: 'DELIVERY_ACCEPTED', notes: 'Accepted by driver' },
-          { status: 'PICKED_UP', notes: 'Picked up from restaurant' },
-          { status: 'ON_THE_WAY', notes: 'Driver is moving towards customer' },
-        ],
-      },
+      paymentStatus: 'PAID',
+      placedMinutesAgo: 120,
     },
-  });
+    {
+      orderNumber: 'ZV-1003',
+      customer: customer1,
+      items: [createdFoodItems[13], createdFoodItems[16]], // Butter Chicken + Garlic Naan
+      status: 'DELIVERED',
+      paymentMethod: 'ONLINE_DEMO_PAY',
+      paymentStatus: 'PAID',
+      placedMinutesAgo: 60,
+    },
+    {
+      orderNumber: 'ZV-1004',
+      customer: customer2,
+      items: [createdFoodItems[2], createdFoodItems[20]], // Peri Peri Paneer Pizza + Cheese Fries
+      status: 'DELIVERED',
+      paymentMethod: 'ONLINE_DEMO_PAY',
+      paymentStatus: 'PAID',
+      placedMinutesAgo: 45,
+    },
+  ];
 
-  // Add sample driver location track for Order 3
-  await prisma.deliveryLocationHistory.createMany({
-    data: [
-      {
-        deliveryPartnerId: driver2Profile.id,
-        orderId: onTheWayOrder.id,
-        latitude: 12.9725,
-        longitude: 77.6075,
-        heading: 210,
-        speed: 18.5,
-        timestamp: new Date(Date.now() - 500000),
-      },
-      {
-        deliveryPartnerId: driver2Profile.id,
-        orderId: onTheWayOrder.id,
-        latitude: 12.9712,
-        longitude: 77.6050,
-        heading: 205,
-        speed: 22.0,
-        timestamp: new Date(Date.now() - 250000),
-      },
-      {
-        deliveryPartnerId: driver2Profile.id,
-        orderId: onTheWayOrder.id,
-        latitude: 12.9705,
-        longitude: 77.6040,
-        heading: 195,
-        speed: 15.0,
-        timestamp: new Date(),
-      },
-    ],
-  });
+  for (const sod of sampleOrdersData) {
+    const placedAt = new Date(now.getTime() - sod.placedMinutesAgo * 60000);
+    const deliveredAt = new Date(placedAt.getTime() + 35 * 60000);
 
-  console.log('✅ Seeding completed successfully!');
-  console.log('----------------------------------------------------');
-  console.log('  DEMO CREDENTIALS:');
-  console.log('  • Admin:              admin@quickbite.com          / Password123!');
-  console.log('  • Customer 1:         customer@example.com         / Password123!');
-  console.log('  • Customer 2:         priya.customer@example.com   / Password123!');
-  console.log('  • Restaurant Owner 1: owner@pizzahub.com           / Password123!');
-  console.log('  • Restaurant Owner 2: owner@burgercraft.com        / Password123!');
-  console.log('  • Driver 1 (Online):  arjun.driver@quickbite.com   / Password123!');
-  console.log('  • Driver 2 (Online):  kiran.driver@quickbite.com   / Password123!');
-  console.log('  • Driver 3 (Offline): ravi.driver@quickbite.com    / Password123!');
-  console.log('----------------------------------------------------');
+    const subtotal = sod.items.reduce((sum: number, it: any) => sum + (it.discountPrice || it.price), 0);
+    const taxAmount = Math.round(subtotal * 0.05 * 100) / 100;
+    const deliveryFee = 40.0;
+    const totalAmount = Math.round((subtotal + taxAmount + deliveryFee) * 100) / 100;
+
+    const ord = await prisma.order.create({
+      data: {
+        orderNumber: sod.orderNumber,
+        customerId: sod.customer.id,
+        restaurantId: zavoraRestaurant.id,
+        deliveryBoyId: zavoraDeliveryBoy.id,
+        status: sod.status,
+        subtotal,
+        taxAmount,
+        deliveryFee,
+        totalAmount,
+        paymentMethod: sod.paymentMethod,
+        paymentStatus: sod.paymentStatus,
+        deliveryAddressSnapshot: JSON.stringify({
+          label: 'Home',
+          recipientName: sod.customer.name,
+          phone: sod.customer.phone,
+          streetAddress: 'Apartment 402, Prestige Towers, Residency Road',
+          city: 'Bengaluru',
+          state: 'Karnataka',
+          postalCode: '560025',
+          latitude: 12.9698,
+          longitude: 77.6033,
+        }),
+        placedAt,
+        acceptedAt: new Date(placedAt.getTime() + 3 * 60000),
+        readyAt: new Date(placedAt.getTime() + 18 * 60000),
+        assignedAt: new Date(placedAt.getTime() + 19 * 60000),
+        pickedUpAt: new Date(placedAt.getTime() + 25 * 60000),
+        deliveredAt,
+        createdAt: placedAt,
+        updatedAt: deliveredAt,
+        items: {
+          create: sod.items.map((it: any) => ({
+            foodItemId: it.id,
+            name: it.name,
+            quantity: 1,
+            unitPrice: it.discountPrice || it.price,
+            totalPrice: it.discountPrice || it.price,
+          })),
+        },
+        statusHistory: {
+          createMany: {
+            data: [
+              { status: 'PENDING', notes: 'Order placed by customer', createdAt: placedAt },
+              { status: 'RESTAURANT_ACCEPTED', notes: 'Manager accepted order', createdAt: new Date(placedAt.getTime() + 3 * 60000) },
+              { status: 'PREPARING', notes: 'Kitchen began cooking', createdAt: new Date(placedAt.getTime() + 5 * 60000) },
+              { status: 'READY_FOR_PICKUP', notes: 'Order packed and ready', createdAt: new Date(placedAt.getTime() + 18 * 60000) },
+              { status: 'DELIVERY_ASSIGNED', notes: 'Assigned to Kiran Kumar', createdAt: new Date(placedAt.getTime() + 19 * 60000) },
+              { status: 'DELIVERY_ACCEPTED', notes: 'Kiran accepted delivery', createdAt: new Date(placedAt.getTime() + 20 * 60000) },
+              { status: 'ARRIVED_AT_RESTAURANT', notes: 'Kiran reached Zavora', createdAt: new Date(placedAt.getTime() + 23 * 60000) },
+              { status: 'PICKED_UP', notes: 'Food picked up', createdAt: new Date(placedAt.getTime() + 25 * 60000) },
+              { status: 'ON_THE_WAY', notes: 'Out for delivery', createdAt: new Date(placedAt.getTime() + 26 * 60000) },
+              { status: 'DELIVERED', notes: 'Delivered to customer doorstep', createdAt: deliveredAt },
+            ],
+          },
+        },
+        payments: {
+          create: {
+            userId: sod.customer.id,
+            amount: totalAmount,
+            method: sod.paymentMethod,
+            status: sod.paymentStatus,
+            transactionRef: `TXN-${sod.orderNumber}`,
+          },
+        },
+      },
+    });
+  }
+
+  console.log('✅ Seeded real historical delivered orders for accurate database analytics.');
+  console.log('🎉 Zavora single-restaurant seeding completed successfully!');
 }
 
 main()
   .catch((e) => {
-    console.error('❌ Error during seeding:', e);
+    console.error('❌ Seeding error:', e);
     process.exit(1);
   })
   .finally(async () => {
