@@ -3,6 +3,24 @@ import { Link } from 'react-router-dom';
 import { restaurantService } from '../services/restaurantService.js';
 import { FoodCategory } from '../types/index.js';
 import { ArrowRight, Sparkles, Utensils } from 'lucide-react';
+import { FoodItem } from '../types/index.js';
+import { FoodCard } from '../components/customer/FoodCard.js';
+import { EmptyState } from '../components/common/EmptyState.js';
+import { UtensilsCrossed, Search, Filter, Sparkles, Flame, Check } from 'lucide-react';
+
+const POPULAR_CATEGORIES = [
+  { name: 'All', icon: '🍽️', desc: 'Browse all gourmet foods' },
+  { name: 'Pizza', icon: '🍕', desc: 'Wood-fired & artisanal crusts' },
+  { name: 'Burgers', icon: '🍔', desc: 'Smashed patties & craft sliders' },
+  { name: 'Biryani', icon: '🍚', desc: 'Fragrant dum royal rice' },
+  { name: 'South Indian', icon: '🥞', desc: 'Crispy dosas & fluffy idlis' },
+  { name: 'North Indian', icon: '🍛', desc: 'Rich curries & tandoor breads' },
+  { name: 'Chinese', icon: '🍜', desc: 'Dim sums, noodles & wok fries' },
+  { name: 'Desserts', icon: '🍰', desc: 'Artisanal cakes & Italian gelato' },
+  { name: 'Beverages', icon: '🥤', desc: 'Fresh shakes, coffees & coolers' },
+  { name: 'Snacks', icon: '🍟', desc: 'Crispy starters & finger foods' },
+  { name: 'Healthy Food', icon: '🥗', desc: 'Superfood bowls & fresh salads' },
+];
 
 export const Categories: React.FC = () => {
   const [categories, setCategories] = useState<FoodCategory[]>([]);

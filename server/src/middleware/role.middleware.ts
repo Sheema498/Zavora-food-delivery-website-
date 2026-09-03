@@ -33,3 +33,7 @@ export const requireCustomer = requireRole('CUSTOMER', 'SUPER_ADMIN', 'ADMIN');
 export const requireAdmin = requireSuperAdmin;
 export const requireRestaurant = requireRestaurantManager;
 export const requireDeliveryPartner = requireDeliveryBoy;
+export const requireAdmin = requireRole('ADMIN', 'SUPER_ADMIN');
+export const requireRestaurant = requireRole('RESTAURANT', 'RESTAURANT_ADMIN', 'ADMIN', 'SUPER_ADMIN');
+export const requireDeliveryPartner = requireRole('DELIVERY_PARTNER', 'ADMIN', 'SUPER_ADMIN');
+export const requireCustomer = requireRole('CUSTOMER', 'ADMIN', 'SUPER_ADMIN');

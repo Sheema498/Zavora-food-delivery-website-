@@ -23,6 +23,7 @@ export const Contact: React.FC = () => {
       <div className="text-center space-y-3">
         <h1 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
           Contact Zavora Restaurant
+          Get in Touch with ZAVORA Support
         </h1>
         <p className="text-xs sm:text-sm text-slate-500 max-w-xl mx-auto leading-relaxed">
           Have a question about our menu, need catering support, or want to give feedback to our kitchen manager? We'd love to hear from you.
@@ -41,6 +42,17 @@ export const Contact: React.FC = () => {
             <div>
               <h2 className="text-base font-black text-slate-900">Zavora Restaurant</h2>
               <p className="text-xs text-brand-600 font-bold">Satisfy your hunger instantly</p>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Contact Info Cards */}
+        <div className="space-y-4">
+          <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm flex items-start gap-4">
+            <div className="w-10 h-10 rounded-2xl bg-purple-50 text-brand-600 flex items-center justify-center shrink-0">
+              <Mail className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-slate-900">Email Us</h3>
+              <p className="text-xs text-slate-500 mt-0.5">support@zavora.com</p>
+              <p className="text-xs text-slate-500">partners@zavora.com</p>
             </div>
           </div>
 

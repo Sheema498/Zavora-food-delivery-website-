@@ -246,24 +246,23 @@ export const CartDrawer: React.FC = () => {
       <Modal
         isOpen={restaurantConflict.isOpen}
         onClose={cancelRestaurantConflict}
-        title="Replace Cart Items?"
+        title="Restaurant Conflict"
         maxWidth="sm"
       >
         <div className="space-y-4">
           <div className="flex items-start gap-3 p-3 bg-amber-50 rounded-xl border border-amber-200 text-amber-800 text-xs">
             <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-            <p>
-              Your cart currently contains items from another restaurant. Adding this item will
-              clear your existing cart.
+            <p className="font-medium">
+              Your cart contains items from another restaurant. Would you like to clear your current cart and add this item?
             </p>
           </div>
 
           <div className="flex justify-end gap-2 pt-2">
             <Button onClick={cancelRestaurantConflict} variant="outline" size="sm">
-              Keep Existing Cart
+              Keep Current Cart
             </Button>
             <Button onClick={confirmClearAndAdd} variant="primary" size="sm">
-              Replace & Add Item
+              Clear Cart & Add
             </Button>
           </div>
         </div>

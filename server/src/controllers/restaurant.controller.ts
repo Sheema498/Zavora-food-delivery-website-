@@ -75,13 +75,18 @@ export class RestaurantController {
     });
   }
 
+  private static getAuthorizedRestaurantId(req: AuthenticatedRequest): string {
+    const isSuperAdmin = req.user?.role === 'ADMIN' || req.user?.role === 'SUPER_ADMIN';
+    const restaurantId = isSuperAdmin ? (req.params.restaurantId || req.user?.restaurantId) : req.user?.restaurantId;
+    if (!restaurantId) {
+      throw new AppError('Restaurant ID missing or unauthorized. Access restricted to own restaurant records.', HTTP_STATUS.FORBIDDEN);
+    }
+    return restaurantId;
+  }
+
   // Restaurant Portal Actions
   public static async addFoodItem(req: AuthenticatedRequest, res: Response): Promise<void> {
-    const restaurantId = req.user?.restaurantId || req.params.restaurantId;
-    if (!restaurantId) {
-      throw new AppError('Restaurant ID missing from user context', HTTP_STATUS.BAD_REQUEST);
-    }
-
+    const restaurantId = RestaurantController.getAuthorizedRestaurantId(req);
     const item = await RestaurantService.addFoodItem(restaurantId, req.body, req.user?.userId);
     res.status(HTTP_STATUS.CREATED).json({
       success: true,
@@ -91,11 +96,8 @@ export class RestaurantController {
   }
 
   public static async updateFoodItem(req: AuthenticatedRequest, res: Response): Promise<void> {
-    const restaurantId = req.user?.restaurantId || req.params.restaurantId;
+    const restaurantId = RestaurantController.getAuthorizedRestaurantId(req);
     const { itemId } = req.params;
-    if (!restaurantId) {
-      throw new AppError('Restaurant ID missing from user context', HTTP_STATUS.BAD_REQUEST);
-    }
 
     const item = await RestaurantService.updateFoodItem(restaurantId, itemId, req.body, req.user?.userId);
     res.status(HTTP_STATUS.OK).json({
@@ -106,11 +108,8 @@ export class RestaurantController {
   }
 
   public static async deleteFoodItem(req: AuthenticatedRequest, res: Response): Promise<void> {
-    const restaurantId = req.user?.restaurantId || req.params.restaurantId;
+    const restaurantId = RestaurantController.getAuthorizedRestaurantId(req);
     const { itemId } = req.params;
-    if (!restaurantId) {
-      throw new AppError('Restaurant ID missing from user context', HTTP_STATUS.BAD_REQUEST);
-    }
 
     const result = await RestaurantService.deleteFoodItem(restaurantId, itemId, req.user?.userId);
     res.status(HTTP_STATUS.OK).json({
@@ -120,11 +119,7 @@ export class RestaurantController {
   }
 
   public static async addCategory(req: AuthenticatedRequest, res: Response): Promise<void> {
-    const restaurantId = req.user?.restaurantId || req.params.restaurantId;
-    if (!restaurantId) {
-      throw new AppError('Restaurant ID missing', HTTP_STATUS.BAD_REQUEST);
-    }
-
+    const restaurantId = RestaurantController.getAuthorizedRestaurantId(req);
     const category = await RestaurantService.addCategory(restaurantId, req.body);
     res.status(HTTP_STATUS.CREATED).json({
       success: true,
@@ -133,11 +128,7 @@ export class RestaurantController {
   }
 
   public static async toggleStatus(req: AuthenticatedRequest, res: Response): Promise<void> {
-    const restaurantId = req.user?.restaurantId || req.params.restaurantId;
-    if (!restaurantId) {
-      throw new AppError('Restaurant ID missing', HTTP_STATUS.BAD_REQUEST);
-    }
-
+    const restaurantId = RestaurantController.getAuthorizedRestaurantId(req);
     const { isOpen } = req.body;
     const restaurant = await RestaurantService.toggleRestaurantStatus(restaurantId, isOpen);
     res.status(HTTP_STATUS.OK).json({
@@ -148,11 +139,7 @@ export class RestaurantController {
   }
 
   public static async getStats(req: AuthenticatedRequest, res: Response): Promise<void> {
-    const restaurantId = req.user?.restaurantId || req.params.restaurantId;
-    if (!restaurantId) {
-      throw new AppError('Restaurant ID missing', HTTP_STATUS.BAD_REQUEST);
-    }
-
+    const restaurantId = RestaurantController.getAuthorizedRestaurantId(req);
     const stats = await RestaurantService.getRestaurantStats(restaurantId);
     res.status(HTTP_STATUS.OK).json({
       success: true,

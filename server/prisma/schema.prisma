@@ -104,6 +104,41 @@ model Restaurant {
   orders             Order[]
   reviews            RestaurantReview[]
   carts              Cart[]
+  id                String             @id @default(uuid())
+  name              String
+  slug              String             @unique
+  description       String
+  phone             String
+  email             String
+  logoUrl           String?
+  bannerUrl         String?
+  address           String
+  city              String
+  state             String
+  postalCode        String
+  latitude          Float              @default(12.9716)
+  longitude         Float              @default(77.5946)
+  isOpen            Boolean            @default(true)
+  isFeatured        Boolean            @default(false)
+  cuisineTypes      String             // Comma-separated or JSON list
+  priceRange        String             @default("$$") // $, $$, $$$, $$$$
+  rating            Float              @default(4.5)
+  totalRatings      Int                @default(0)
+  avgPrepTimeMinutes Int               @default(25)
+  deliveryFee       Float              @default(40.0)
+  minOrderAmount    Float              @default(100.0)
+  commissionRate    Float              @default(0.15) // 15% platform commission
+  totalRevenue      Float              @default(0.0)
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  staff             RestaurantStaff[]
+  categories        FoodCategory[]
+  foodItems         FoodItem[]
+  orders            Order[]
+  reviews           RestaurantReview[]
+  carts             Cart[]
+  deliveryPartner   DeliveryPartnerProfile?
 
   @@index([slug])
   @@index([isOpen])
@@ -310,6 +345,35 @@ model OrderStatusHistory {
   order         Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   @@index([orderId])
+}
+
+model DeliveryPartnerProfile {
+  id                 String                     @id @default(uuid())
+  userId             String                     @unique
+  user               User                       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vehicleType        String                     @default("MOTORBIKE") // BICYCLE, MOTORBIKE, SCOOTER, CAR
+  vehicleNumber      String
+  licenseNumber      String
+  isOnline           Boolean                    @default(false)
+  isAvailable        Boolean                    @default(true)
+  currentLatitude    Float                      @default(12.9716)
+  currentLongitude   Float                      @default(77.5946)
+  lastLocationUpdate DateTime                   @default(now())
+  rating             Float                      @default(4.8)
+  totalDeliveries    Int                        @default(0)
+  totalEarnings      Float                      @default(0.0)
+  restaurantId       String?                    @unique
+  createdAt          DateTime                   @default(now())
+  updatedAt          DateTime                   @updatedAt
+
+  restaurant         Restaurant?                @relation(fields: [restaurantId], references: [id], onDelete: SetNull)
+
+  orders             Order[]
+  assignments        DeliveryAssignment[]
+  locations          DeliveryLocationHistory[]
+
+  @@index([isOnline])
+  @@index([isAvailable])
 }
 
 model DeliveryAssignment {

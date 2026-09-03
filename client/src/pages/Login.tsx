@@ -37,6 +37,12 @@ export const Login: React.FC = () => {
     try {
       const res = await login(email, password);
       redirectByRole(res.user.role);
+
+      // Redirect by role
+      if (res.user.role === 'RESTAURANT' || res.user.role === 'RESTAURANT_ADMIN') navigate('/restaurant/dashboard');
+      else if (res.user.role === 'DELIVERY_PARTNER') navigate('/delivery/dashboard');
+      else if (res.user.role === 'ADMIN' || res.user.role === 'SUPER_ADMIN') navigate('/admin/dashboard');
+      else navigate(redirectUrl === '/login' ? '/restaurants' : redirectUrl);
     } catch (err: any) {
       setError(err.response?.data?.message || err.message || 'Invalid email or password');
     } finally {
@@ -50,6 +56,11 @@ export const Login: React.FC = () => {
     try {
       await quickDemoLogin(role);
       redirectByRole(role);
+
+      if (role === 'CUSTOMER') navigate('/restaurants');
+      else if (role === 'RESTAURANT' || role === 'RESTAURANT_ADMIN') navigate('/restaurant/dashboard');
+      else if (role === 'DELIVERY_PARTNER') navigate('/delivery/dashboard');
+      else if (role === 'ADMIN' || role === 'SUPER_ADMIN') navigate('/admin/dashboard');
     } catch (err: any) {
       setError(err.response?.data?.message || err.message || 'Quick demo login failed');
     } finally {
@@ -72,6 +83,44 @@ export const Login: React.FC = () => {
         </h1>
         <p className="text-xs text-brand-600 font-bold">Satisfy your hunger instantly</p>
       </div>
+    <div className="min-h-[calc(100vh-8rem)] flex items-center justify-center p-4 sm:p-6">
+      <div className="w-full max-w-md bg-white rounded-3xl p-6 sm:p-8 border border-slate-100 shadow-xl space-y-6">
+        {/* Logo & Header */}
+        <div className="text-center space-y-2">
+          <img
+            src="/zavora-logo.png"
+            alt="Zavora Logo"
+            className="w-16 h-16 rounded-2xl object-cover mx-auto shadow-md shadow-purple-900/25"
+          />
+          <h1 className="text-2xl font-black text-slate-900">Welcome to ZAVORA</h1>
+          <p className="text-xs text-brand-600 font-bold">
+            Satisfy your hunger instantly
+          </p>
+          <p className="text-xs text-slate-500">
+            Sign in to access your dashboard and live delivery management
+          </p>
+        </div>
+
+        {isExpired && (
+          <div className="p-3 bg-amber-50 border border-amber-200 text-amber-800 text-xs rounded-xl text-center">
+            Your previous session has expired. Please log in again.
+          </div>
+        )}
+
+        {error && (
+          <div className="p-3 bg-rose-50 border border-rose-200 text-rose-800 text-xs rounded-xl text-center">
+            {error}
+          </div>
+        )}
+
+        {/* 1-Click Fast Demo Login Buttons */}
+        <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 space-y-2.5">
+          <div className="flex items-center justify-between text-xs font-bold text-slate-700">
+            <span className="flex items-center gap-1 text-brand-600">
+              <Sparkles className="w-3.5 h-3.5" /> 1-Click Demo Logins:
+            </span>
+            <span className="text-[10px] text-slate-400 font-normal">Pre-filled & active</span>
+          </div>
 
       <div className="mt-6 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-white py-8 px-6 shadow-xl rounded-3xl border border-slate-100 sm:px-10 space-y-6">

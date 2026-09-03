@@ -22,6 +22,19 @@ export const Footer: React.FC = () => {
             </p>
             <p className="text-slate-400 text-xs leading-relaxed">
               Zavora Restaurant serves artisanal gourmet dishes cooked fresh with premium ingredients, delivered hot and fresh straight to your doorstep.
+            <Link to="/" className="flex items-center gap-2.5">
+              <img
+                src="/zavora-logo.png"
+                alt="Zavora Logo"
+                className="w-9 h-9 rounded-xl object-cover shadow-sm"
+              />
+              <span className="text-lg font-black text-white tracking-tight">ZAVORA</span>
+            </Link>
+            <p className="text-brand-400 text-xs font-semibold">
+              Satisfy your hunger instantly
+            </p>
+            <p className="text-slate-400 text-xs leading-relaxed">
+              Real-Time Food Delivery Management Platform connecting customers, restaurants, delivery partners, and central dispatch with live GPS tracking.
             </p>
             <div className="inline-flex items-center gap-1.5 bg-slate-800 text-slate-300 px-2.5 py-1 rounded-md text-[11px] font-medium">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
@@ -55,6 +68,10 @@ export const Footer: React.FC = () => {
                   Contact Us
                 </Link>
               </li>
+              <li><Link to="/restaurants" className="hover:text-white transition-colors">All Restaurants</Link></li>
+              <li><Link to="/categories" className="hover:text-white transition-colors">Food Categories</Link></li>
+              <li><Link to="/about" className="hover:text-white transition-colors">About Zavora</Link></li>
+              <li><Link to="/contact" className="hover:text-white transition-colors">Contact Support</Link></li>
             </ul>
           </div>
 
@@ -120,6 +137,7 @@ export const Footer: React.FC = () => {
 
         <div className="border-t border-slate-800 mt-10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-slate-400">
           <p>© {new Date().getFullYear()} Zavora Restaurant. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} ZAVORA Platform. All rights reserved. Proprietary Enterprise System.</p>
           <div className="flex items-center gap-4">
             <span>Bengaluru, Karnataka</span>
             <span>•</span>

@@ -169,6 +169,9 @@ export const AppRoutes: React.FC = () => {
         }
       >
         <Route path="/manager" element={<ManagerLayout />}>
+      {/* Restaurant Portal */}
+      <Route element={<RequireAuth allowedRoles={['RESTAURANT', 'RESTAURANT_ADMIN', 'ADMIN', 'SUPER_ADMIN']} />}>
+        <Route path="/restaurant" element={<PortalLayout />}>
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<RestaurantDashboard />} />
           <Route path="orders" element={<RestaurantOrders />} />
@@ -194,6 +197,9 @@ export const AppRoutes: React.FC = () => {
         }
       >
         <Route path="/delivery" element={<DeliveryLayout />}>
+      {/* Delivery Partner Portal */}
+      <Route element={<RequireAuth allowedRoles={['DELIVERY_PARTNER', 'ADMIN', 'SUPER_ADMIN']} />}>
+        <Route path="/delivery" element={<PortalLayout />}>
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<DeliveryDashboard />} />
           <Route path="active" element={<DeliveryActive />} />
@@ -212,11 +218,15 @@ export const AppRoutes: React.FC = () => {
         }
       >
         <Route path="/admin" element={<AdminLayout />}>
+      {/* Admin Control Center */}
+      <Route element={<RequireAuth allowedRoles={['ADMIN', 'SUPER_ADMIN']} />}>
+        <Route path="/admin" element={<PortalLayout />}>
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<AdminDashboard />} />
           <Route path="orders" element={<AdminLiveOrders />} />
           <Route path="live-orders" element={<AdminLiveOrders />} />
           <Route path="customers" element={<AdminUsers />} />
+          <Route path="live-operations" element={<AdminLiveOrders />} />
           <Route path="users" element={<AdminUsers />} />
           <Route path="menu" element={<RestaurantMenu />} />
           <Route path="analytics" element={<AdminDashboard />} />

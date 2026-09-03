@@ -33,6 +33,16 @@ const POPULAR_CUISINES = [
   { name: 'Snacks', icon: '🍟', desc: 'Loaded Peri Peri Bites' },
   { name: 'Desserts', icon: '🍰', desc: 'Molten Lava & Gulab Jamun' },
   { name: 'Beverages', icon: '🥤', desc: 'Cold Brews & Shakes' },
+  { name: 'Pizza', icon: '🍕', category: 'Pizza', count: 'Artisanal Crusts' },
+  { name: 'Burgers', icon: '🍔', category: 'Burgers', count: 'Smashed & Craft' },
+  { name: 'Biryani', icon: '🍚', category: 'Biryani', count: 'Royal Dum Handi' },
+  { name: 'South Indian', icon: '🥞', category: 'South Indian', count: 'Ghee Roast Tiffins' },
+  { name: 'North Indian', icon: '🍛', category: 'North Indian', count: 'Rich Tandoor & Curries' },
+  { name: 'Chinese', icon: '🍜', category: 'Chinese', count: 'Dim Sum & Noodles' },
+  { name: 'Desserts', icon: '🍰', category: 'Desserts', count: 'Artisanal Sweets' },
+  { name: 'Beverages', icon: '🥤', category: 'Beverages', count: 'Shakes & Coolers' },
+  { name: 'Snacks', icon: '🍟', category: 'Snacks', count: 'Crispy Starters' },
+  { name: 'Healthy Food', icon: '🥗', category: 'Healthy Food', count: 'Nutrient Bowls' },
 ];
 
 export const Home: React.FC = () => {
@@ -69,6 +79,10 @@ export const Home: React.FC = () => {
     <div className="space-y-16 pb-20">
       {/* 1. Hero Banner with ZAVORA Identity */}
       <section className="relative bg-gradient-to-br from-[#3b1959] via-[#52227d] to-[#712ea8] text-white py-16 sm:py-24 px-4 sm:px-6 lg:px-8 rounded-3xl overflow-hidden shadow-2xl mx-3 sm:mx-6 mt-4">
+    <div className="space-y-14 pb-20">
+      {/* Hero Banner with ZAVORA Identity */}
+      <section className="relative bg-gradient-to-br from-[#4a2472] via-[#5c2d8d] to-[#7b3fa8] text-white py-16 sm:py-24 px-4 sm:px-6 lg:px-8 rounded-3xl overflow-hidden shadow-2xl mx-3 sm:mx-6 mt-4">
+        {/* Soft atmospheric background glow elements */}
         <div className="absolute -top-24 -right-24 w-96 h-96 bg-amber-400/10 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-purple-300/15 rounded-full blur-3xl pointer-events-none" />
 
@@ -81,6 +95,13 @@ export const Home: React.FC = () => {
               className="h-6 w-auto object-contain"
             />
             <span className="tracking-wide">Welcome to Zavora Restaurant</span>
+          <div className="inline-flex items-center gap-2.5 bg-white/15 backdrop-blur-md px-4 py-2 rounded-full text-xs font-bold text-white border border-white/20 shadow-sm">
+            <img
+              src="/zavora-logo.png"
+              alt="Zavora"
+              className="w-5 h-5 rounded-md object-cover"
+            />
+            <span className="tracking-wide">Real-Time Multi-Restaurant Food Delivery Platform</span>
           </div>
 
           <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight leading-tight drop-shadow-sm">
@@ -92,6 +113,7 @@ export const Home: React.FC = () => {
 
           <p className="text-sm sm:text-base text-purple-100 max-w-2xl mx-auto leading-relaxed font-medium">
             Hand-crafted artisanal pizzas, smashed gourmet burgers, royal dum biryanis, and rich curries cooked fresh to order by Master Chefs.
+            Discover six curated artisanal demo restaurants, track kitchen order confirmations live, and follow your dedicated delivery partner with real-time GPS tracking.
           </p>
 
           {/* Search Bar */}
@@ -104,6 +126,7 @@ export const Home: React.FC = () => {
               <input
                 type="text"
                 placeholder="Search pizzas, biryanis, burgers, curries, desserts..."
+                placeholder="Search pizzas, biryanis, smashed burgers, pasta, desserts..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none bg-transparent"
@@ -115,6 +138,7 @@ export const Home: React.FC = () => {
               size="md"
               className="shrink-0 px-6 py-3 rounded-2xl bg-brand-500 hover:bg-brand-600 font-bold"
             >
+            <Button type="submit" variant="primary" size="md" className="shrink-0 px-6 py-3 rounded-2xl bg-brand-500 hover:bg-brand-600">
               Search Food
             </Button>
           </form>
@@ -134,6 +158,20 @@ export const Home: React.FC = () => {
             >
               Browse Categories
             </Link>
+          {/* Highlight Badges */}
+          <div className="pt-4 flex flex-wrap justify-center gap-6 text-xs text-purple-100 font-semibold">
+            <div className="flex items-center gap-1.5 bg-black/15 backdrop-blur-xs px-3.5 py-1.5 rounded-full border border-white/10">
+              <Zap className="w-4 h-4 text-amber-300" />
+              <span>~25 Mins Average Delivery</span>
+            </div>
+            <div className="flex items-center gap-1.5 bg-black/15 backdrop-blur-xs px-3.5 py-1.5 rounded-full border border-white/10">
+              <Bike className="w-4 h-4 text-amber-200" />
+              <span>Dedicated Restaurant Couriers</span>
+            </div>
+            <div className="flex items-center gap-1.5 bg-black/15 backdrop-blur-xs px-3.5 py-1.5 rounded-full border border-white/10">
+              <Clock className="w-4 h-4 text-emerald-300" />
+              <span>Live Turn-By-Turn GPS</span>
+            </div>
           </div>
         </div>
       </section>
@@ -168,6 +206,18 @@ export const Home: React.FC = () => {
             >
               <span className="text-3xl mb-2 group-hover:scale-110 transition-transform">
                 {cuisine.icon}
+        <div className="grid grid-cols-2 sm:grid-cols-5 lg:grid-cols-10 gap-3 sm:gap-3.5">
+          {POPULAR_CUISINES.map((cat) => (
+            <Link
+              key={cat.name}
+              to={`/categories?category=${encodeURIComponent(cat.category)}`}
+              className="bg-white rounded-3xl p-3 sm:p-4 border border-slate-200 shadow-sm hover:shadow-md hover:border-brand-400 transition-all text-center flex flex-col items-center group cursor-pointer"
+            >
+              <div className="w-12 h-12 rounded-2xl bg-orange-50 text-2xl flex items-center justify-center group-hover:scale-110 transition-transform mb-2 shadow-xs">
+                {cat.icon}
+              </div>
+              <span className="text-xs font-bold text-slate-800 group-hover:text-brand-600 transition-colors">
+                {cat.name}
               </span>
               <span className="text-xs font-bold text-slate-800 group-hover:text-brand-600 transition-colors">
                 {cuisine.name}

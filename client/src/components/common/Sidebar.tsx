@@ -26,7 +26,7 @@ export const Sidebar: React.FC = () => {
 
   let links: Array<{ to: string; label: string; icon: React.ReactNode }> = [];
 
-  if (role === 'RESTAURANT') {
+  if (role === 'RESTAURANT' || role === 'RESTAURANT_ADMIN') {
     links = [
       { to: '/restaurant/dashboard', label: 'Overview', icon: <LayoutDashboard className="w-4 h-4" /> },
       { to: '/restaurant/orders', label: 'Live Orders Queue', icon: <ShoppingBag className="w-4 h-4" /> },
@@ -43,10 +43,11 @@ export const Sidebar: React.FC = () => {
       { to: '/delivery/earnings', label: 'Shift Earnings', icon: <DollarSign className="w-4 h-4" /> },
       { to: '/delivery/profile', label: 'Vehicle Profile', icon: <Settings className="w-4 h-4" /> },
     ];
-  } else if (role === 'ADMIN') {
+  } else if (role === 'ADMIN' || role === 'SUPER_ADMIN') {
     links = [
       { to: '/admin/dashboard', label: 'Executive Dashboard', icon: <LayoutDashboard className="w-4 h-4" /> },
-      { to: '/admin/live-orders', label: 'Live Operations & Dispatch', icon: <RadioTower className="w-4 h-4" /> },
+      { to: '/admin/live-operations', label: 'Live Operations Matrix', icon: <RadioTower className="w-4 h-4" /> },
+      { to: '/admin/live-orders', label: 'Central Courier Dispatch', icon: <Radio className="w-4 h-4" /> },
       { to: '/admin/users', label: 'Users & Customers', icon: <Users className="w-4 h-4" /> },
       { to: '/admin/restaurants', label: 'Restaurants Manager', icon: <Store className="w-4 h-4" /> },
       { to: '/admin/drivers', label: 'Delivery Fleets', icon: <Bike className="w-4 h-4" /> },
@@ -57,6 +58,19 @@ export const Sidebar: React.FC = () => {
 
   return (
     <aside className="w-64 bg-white border-r border-slate-200 min-h-[calc(100vh-4rem)] p-4 shrink-0 hidden md:block">
+      {/* Brand Badge */}
+      <div className="flex items-center gap-3 px-3 py-2.5 mb-4 bg-purple-50/50 rounded-2xl border border-purple-100">
+        <img
+          src="/zavora-logo.png"
+          alt="Zavora Logo"
+          className="w-8 h-8 rounded-xl object-cover shadow-sm"
+        />
+        <div className="min-w-0">
+          <p className="text-xs font-black text-slate-900 tracking-tight">ZAVORA</p>
+          <p className="text-[10px] font-bold text-brand-600 truncate">Portal Suite</p>
+        </div>
+      </div>
+
       <div className="mb-6 px-3 py-2 bg-slate-50 rounded-xl border border-slate-100">
         <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-500">
           <Activity className="w-3.5 h-3.5 text-brand-500" />

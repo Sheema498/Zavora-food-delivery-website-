@@ -124,6 +124,25 @@ export const DEMO_CREDENTIALS: Array<{
     email: 'admin@zavora.com',
     badge: 'Super Admin',
     description: 'Full business analytics, food performance, category revenue',
+    role: 'RESTAURANT_ADMIN',
+    name: 'Zavora Pizza House (Kitchen)',
+    email: 'owner1@zavora.com',
+    badge: 'Restaurant Admin',
+    description: 'Receive order chimes, accept/reject, manage menu',
+  },
+  {
+    role: 'DELIVERY_PARTNER',
+    name: 'Partner 1 (Dedicated Courier)',
+    email: 'partner1@zavora.com',
+    badge: 'Delivery Partner',
+    description: 'Dedicated dispatch alerts, GPS simulator, step actions',
+  },
+  {
+    role: 'SUPER_ADMIN',
+    name: 'Super Admin (Operations)',
+    email: 'admin@zavora.com',
+    badge: 'Super Admin',
+    description: 'Live orders matrix, central dispatch, platform KPIs',
   },
 ];
 

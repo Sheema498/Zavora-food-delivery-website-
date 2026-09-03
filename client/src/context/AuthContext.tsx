@@ -23,12 +23,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   });
   const [token, setToken] = useState<string | null>(() => {
     return localStorage.getItem('zavora_auth_token');
+    const saved = localStorage.getItem('zavora_user') || localStorage.getItem('quickbite_user');
+    return saved ? JSON.parse(saved) : null;
+  });
+  const [token, setToken] = useState<string | null>(() => {
+    return localStorage.getItem('zavora_auth_token') || localStorage.getItem('quickbite_auth_token');
   });
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
     const initAuth = async () => {
       const storedToken = localStorage.getItem('zavora_auth_token');
+      const storedToken = localStorage.getItem('zavora_auth_token') || localStorage.getItem('quickbite_auth_token');
       if (storedToken) {
         try {
           const profile = await authService.getMe();
@@ -68,6 +74,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setToken(null);
     localStorage.removeItem('zavora_auth_token');
     localStorage.removeItem('zavora_user');
+    localStorage.removeItem('quickbite_auth_token');
+    localStorage.removeItem('quickbite_user');
   };
 
   const updateUser = (updatedFields: Partial<User>) => {
@@ -87,6 +95,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     } else if (role === 'SUPER_ADMIN' || role === 'ADMIN') {
       email = 'admin@zavora.com';
     }
+    let email = 'customer@example.com';
+    if (role === 'RESTAURANT' || role === 'RESTAURANT_ADMIN') email = 'owner1@zavora.com';
+    else if (role === 'DELIVERY_PARTNER') email = 'partner1@zavora.com';
+    else if (role === 'ADMIN' || role === 'SUPER_ADMIN') email = 'admin@zavora.com';
 
     await login(email, 'Password123!');
   };

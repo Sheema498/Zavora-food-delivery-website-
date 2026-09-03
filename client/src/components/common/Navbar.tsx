@@ -56,6 +56,18 @@ export const Navbar: React.FC = () => {
               ZAVORA
             </span>
             <span className="text-[10px] font-bold text-brand-600 block tracking-wider">
+        {/* Logo */}
+        <Link to="/" className="flex items-center gap-2.5 group">
+          <img
+            src="/zavora-logo.png"
+            alt="Zavora Logo"
+            className="w-11 h-11 rounded-2xl object-cover shadow-md shadow-purple-900/20 group-hover:scale-105 transition-transform"
+          />
+          <div>
+            <span className="text-2xl font-black tracking-tight text-slate-900 flex items-center">
+              ZAVORA
+            </span>
+            <span className="text-[10px] font-bold text-brand-600 block -mt-1 tracking-wider">
               Satisfy your hunger instantly
             </span>
           </div>
@@ -104,6 +116,15 @@ export const Navbar: React.FC = () => {
             )}
 
           {isAuthenticated && (user?.role === 'DELIVERY_BOY' || user?.role === 'DELIVERY_PARTNER') && (
+          {isAuthenticated && (user?.role === 'RESTAURANT' || user?.role === 'RESTAURANT_ADMIN') && (
+            <Link
+              to="/restaurant/dashboard"
+              className="text-sm font-bold text-orange-600 hover:text-orange-700 flex items-center gap-1.5 bg-orange-50 px-3 py-1.5 rounded-xl border border-orange-200"
+            >
+              <Store className="w-4 h-4" /> Kitchen Dashboard
+            </Link>
+          )}
+          {isAuthenticated && user?.role === 'DELIVERY_PARTNER' && (
             <Link
               to="/delivery/dashboard"
               className="text-xs font-bold text-teal-700 bg-teal-50 border border-teal-200 px-3 py-1.5 rounded-xl hover:bg-teal-100 transition-colors flex items-center gap-1.5"
@@ -114,6 +135,7 @@ export const Navbar: React.FC = () => {
           )}
 
           {isAuthenticated && (user?.role === 'SUPER_ADMIN' || user?.role === 'ADMIN') && (
+          {isAuthenticated && (user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN') && (
             <Link
               to="/admin/dashboard"
               className="text-xs font-bold text-purple-700 bg-purple-50 border border-purple-200 px-3 py-1.5 rounded-xl hover:bg-purple-100 transition-colors flex items-center gap-1.5"
@@ -192,6 +214,31 @@ export const Navbar: React.FC = () => {
                   </div>
 
                   <div className="py-1">
+                  <div className="py-2">
+                    {(user.role === 'ADMIN' || user.role === 'SUPER_ADMIN') && (
+                      <Link
+                        to="/admin/dashboard"
+                        className="flex items-center gap-2.5 px-4 py-2 text-xs font-bold text-purple-700 hover:bg-purple-50 transition-colors"
+                      >
+                        <ShieldCheck className="w-4 h-4" /> Admin Center
+                      </Link>
+                    )}
+                    {(user.role === 'RESTAURANT' || user.role === 'RESTAURANT_ADMIN') && (
+                      <Link
+                        to="/restaurant/dashboard"
+                        className="flex items-center gap-2.5 px-4 py-2 text-xs font-bold text-orange-700 hover:bg-orange-50 transition-colors"
+                      >
+                        <Store className="w-4 h-4" /> Restaurant Portal
+                      </Link>
+                    )}
+                    {user.role === 'DELIVERY_PARTNER' && (
+                      <Link
+                        to="/delivery/dashboard"
+                        className="flex items-center gap-2.5 px-4 py-2 text-xs font-bold text-teal-700 hover:bg-teal-50 transition-colors"
+                      >
+                        <Bike className="w-4 h-4" /> Delivery Portal
+                      </Link>
+                    )}
                     {user.role === 'CUSTOMER' && (
                       <>
                         <Link
@@ -320,6 +367,45 @@ export const Navbar: React.FC = () => {
             >
               My Orders
             </Link>
+          {isAuthenticated && (
+            <div className="pt-2 border-t border-slate-100">
+              {user?.role === 'CUSTOMER' && (
+                <Link
+                  to="/orders"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="block px-3 py-2 text-sm font-bold text-slate-700 hover:bg-orange-50 rounded-xl"
+                >
+                  My Orders
+                </Link>
+              )}
+              {(user?.role === 'RESTAURANT' || user?.role === 'RESTAURANT_ADMIN') && (
+                <Link
+                  to="/restaurant/dashboard"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="block px-3 py-2 text-sm font-bold text-orange-600 hover:bg-orange-50 rounded-xl"
+                >
+                  Kitchen Dashboard
+                </Link>
+              )}
+              {user?.role === 'DELIVERY_PARTNER' && (
+                <Link
+                  to="/delivery/dashboard"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="block px-3 py-2 text-sm font-bold text-teal-600 hover:bg-teal-50 rounded-xl"
+                >
+                  Delivery Console
+                </Link>
+              )}
+              {(user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN') && (
+                <Link
+                  to="/admin/dashboard"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="block px-3 py-2 text-sm font-bold text-purple-600 hover:bg-purple-50 rounded-xl"
+                >
+                  Admin Center
+                </Link>
+              )}
+            </div>
           )}
         </div>
       )}

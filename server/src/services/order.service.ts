@@ -297,6 +297,16 @@ export class OrderService {
         (requestingUser.role === 'DELIVERY_BOY' || requestingUser.role === 'DELIVERY_PARTNER') &&
         order.deliveryBoyId &&
         order.deliveryBoy?.userId !== requestingUser.userId
+        (requestingUser.role === 'RESTAURANT' || requestingUser.role === 'RESTAURANT_ADMIN') &&
+        (requestingUser as any).restaurantId &&
+        order.restaurantId !== (requestingUser as any).restaurantId
+      ) {
+        throw new AppError('Unauthorized access: Restaurant can only access its own orders', HTTP_STATUS.FORBIDDEN);
+      }
+      if (
+        requestingUser.role === 'DELIVERY_PARTNER' &&
+        order.deliveryPartnerId &&
+        order.deliveryPartner?.userId !== requestingUser.userId
       ) {
         throw new AppError('Unauthorized access to this order', HTTP_STATUS.FORBIDDEN);
       }
