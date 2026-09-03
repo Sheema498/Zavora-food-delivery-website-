@@ -1,5 +1,5 @@
 /**
- * QuickBite Server Formatters
+ * Zavora Server Formatters
  * Currency, dates, and timestamp formatting for receipts and logs
  */
 

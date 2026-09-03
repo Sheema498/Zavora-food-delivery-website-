@@ -30,7 +30,7 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({ isOpen, onClose, ord
         {/* Invoice Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b-2 border-brand-500 pb-4">
           <div>
-            <span className="text-xl font-black text-brand-600 tracking-tight">QuickBite</span>
+            <span className="text-xl font-black text-brand-600 tracking-tight">ZAVORA</span>
             <p className="text-[11px] text-slate-500">Official Electronic Tax Invoice</p>
           </div>
 

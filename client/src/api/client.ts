@@ -17,7 +17,7 @@ const API_BASE = '/api';
 
 export class ApiClient {
   private static getToken(): string | null {
-    return localStorage.getItem('quickbite_auth_token');
+    return localStorage.getItem('zavora_auth_token') || localStorage.getItem('quickbite_auth_token');
   }
 
   public static async request<T = unknown>(
@@ -47,6 +47,8 @@ export class ApiClient {
 
       if (!response.ok) {
         if (response.status === 401 && !endpoint.includes('/auth/login') && !endpoint.includes('/auth/register')) {
+          localStorage.removeItem('zavora_auth_token');
+          localStorage.removeItem('zavora_user');
           localStorage.removeItem('quickbite_auth_token');
           localStorage.removeItem('quickbite_user');
           if (window.location.pathname !== '/login') {

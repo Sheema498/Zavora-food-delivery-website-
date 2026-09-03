@@ -1,87 +1,101 @@
 import React from 'react';
-import { UtensilsCrossed, ShieldCheck, Zap, Bike, HeartHandshake, Award, Sparkles } from 'lucide-react';
+import { ChefHat, ShieldCheck, Flame, Heart, MapPin, Clock, Award, Sparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export const About: React.FC = () => {
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-12">
-      {/* Hero Section */}
-      <div className="text-center max-w-3xl mx-auto space-y-4">
-        <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-orange-100 text-brand-700 rounded-full text-xs font-bold">
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-12">
+      {/* Header */}
+      <div className="text-center space-y-4">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-50 text-brand-700 text-xs font-bold border border-brand-100">
           <Sparkles className="w-3.5 h-3.5" />
-          <span>About QuickBite Platform</span>
+          <span>Our Story & Mission</span>
         </div>
-        <h1 className="text-3xl sm:text-5xl font-black text-slate-900 tracking-tight leading-tight">
-          Next-Generation Real-Time Food Delivery Management
+        <h1 className="text-4xl sm:text-5xl font-black text-slate-900 tracking-tight">
+          About Zavora Restaurant
         </h1>
-        <p className="text-sm sm:text-base text-slate-600 leading-relaxed">
-          QuickBite connects passionate local chefs, hungry customers, and agile delivery partners on a single synchronized platform powered by real-time WebSocket orchestration and keyless topological vector cartography.
+        <p className="text-base text-brand-600 font-bold max-w-xl mx-auto">
+          "Satisfy your hunger instantly"
+        </p>
+        <p className="text-xs sm:text-sm text-slate-500 max-w-2xl mx-auto leading-relaxed">
+          Founded in Bengaluru, Zavora is a culinary destination built on the conviction that food delivery should never compromise on restaurant-grade freshness, flavor, or speed.
         </p>
       </div>
 
-      {/* 4 Pillars Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-3">
-          <div className="w-12 h-12 rounded-2xl bg-orange-50 text-brand-600 flex items-center justify-center font-bold">
-            <Zap className="w-6 h-6" />
+      {/* Hero Image & Values */}
+      <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm space-y-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+          <div className="space-y-4">
+            <h2 className="text-2xl font-black text-slate-900">
+              Fresh Ingredients, Mastered Cooking
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+              At Zavora Restaurant, we don't operate a faceless aggregation marketplace. We run a dedicated kitchen where our master chefs curate artisanal wood-fired pizzas, slow-simmered dum biryanis, crispy smash burgers, and rich authentic curries.
+            </p>
+            <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+              Every order is prepared fresh on-demand upon kitchen acceptance, securely packaged in thermal containers, and handed directly to our dedicated delivery courier.
+            </p>
           </div>
-          <h3 className="text-base font-bold text-slate-900">Zero Refresh Live Sync</h3>
-          <p className="text-xs text-slate-500 leading-relaxed">
-            Bidirectional Socket.IO events keep customers, kitchen chefs, drivers, and administrators instantaneously updated without manual polling.
-          </p>
+
+          <div className="bg-gradient-to-tr from-brand-50 to-orange-100 rounded-2xl p-6 text-center space-y-4 border border-brand-100">
+            <img
+              src="/zavora-logo.png"
+              alt="Zavora"
+              className="h-20 w-auto mx-auto object-contain"
+            />
+            <h3 className="text-base font-bold text-slate-900">Zavora Culinary Hub</h3>
+            <p className="text-xs text-slate-600">
+              88 Brigade Road, Ashok Nagar, Bengaluru 560025
+            </p>
+            <div className="flex items-center justify-center gap-2 text-xs font-bold text-brand-600">
+              <Clock className="w-4 h-4" />
+              <span>Open 11:00 AM - 11:30 PM Daily</span>
+            </div>
+          </div>
         </div>
 
-        <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-3">
-          <div className="w-12 h-12 rounded-2xl bg-sky-50 text-sky-600 flex items-center justify-center font-bold">
-            <Bike className="w-6 h-6" />
+        {/* Pillars */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-6 border-t border-slate-100">
+          <div className="space-y-2">
+            <div className="w-10 h-10 rounded-xl bg-orange-50 text-brand-600 flex items-center justify-center">
+              <Flame className="w-5 h-5" />
+            </div>
+            <h4 className="text-sm font-bold text-slate-900">Always Cooked Fresh</h4>
+            <p className="text-xs text-slate-500 leading-relaxed">
+              No pre-cooked shortcuts or frozen patties. Everything is fired fresh when you order.
+            </p>
           </div>
-          <h3 className="text-base font-bold text-slate-900">Keyless Live GPS Tracking</h3>
-          <p className="text-xs text-slate-500 leading-relaxed">
-            Turn-by-turn road simulation with shortest path Dijkstra graph traversal, bearing rotation, and live courier broadcast coordinates.
-          </p>
-        </div>
 
-        <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-3">
-          <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
-            <ShieldCheck className="w-6 h-6" />
+          <div className="space-y-2">
+            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+              <ShieldCheck className="w-5 h-5" />
+            </div>
+            <h4 className="text-sm font-bold text-slate-900">Hygiene First</h4>
+            <p className="text-xs text-slate-500 leading-relaxed">
+              Temperature-controlled prep stations, sanitized kitchens, and tamper-evident packaging.
+            </p>
           </div>
-          <h3 className="text-base font-bold text-slate-900">Audited Financials</h3>
-          <p className="text-xs text-slate-500 leading-relaxed">
-            Double-entry platform accounting, automated GST tax calculation with SAC codes, driver tipping, and transparent 85% restaurant payouts.
-          </p>
-        </div>
 
-        <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-3">
-          <div className="w-12 h-12 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center font-bold">
-            <Award className="w-6 h-6" />
+          <div className="space-y-2">
+            <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+              <Award className="w-5 h-5" />
+            </div>
+            <h4 className="text-sm font-bold text-slate-900">Dedicated Couriers</h4>
+            <p className="text-xs text-slate-500 leading-relaxed">
+              Our single-courier delivery system ensures reliable, prompt, and live-tracked delivery.
+            </p>
           </div>
-          <h3 className="text-base font-bold text-slate-900">100k+ Production Code</h3>
-          <p className="text-xs text-slate-500 leading-relaxed">
-            Engineered with strict TypeScript typing, Prisma ORM relational modeling, comprehensive Vitest integration suites, and security guards.
-          </p>
         </div>
       </div>
 
-      {/* Call to Action */}
-      <div className="bg-gradient-to-r from-slate-900 to-slate-800 rounded-3xl p-8 sm:p-12 text-white text-center space-y-4 shadow-xl">
-        <h2 className="text-2xl sm:text-3xl font-black">Ready to experience fresh food delivery?</h2>
-        <p className="text-xs sm:text-sm text-slate-300 max-w-xl mx-auto">
-          Explore artisanal partner restaurants in your neighborhood and track your delivery live from the kitchen to your table.
-        </p>
-        <div className="pt-2 flex justify-center gap-4">
-          <Link
-            to="/restaurants"
-            className="px-6 py-3 bg-brand-500 hover:bg-brand-600 text-white font-bold text-sm rounded-2xl shadow-md transition-all"
-          >
-            Explore Restaurants
-          </Link>
-          <Link
-            to="/categories"
-            className="px-6 py-3 bg-white/10 hover:bg-white/20 text-white font-bold text-sm rounded-2xl border border-white/20 transition-all"
-          >
-            Browse Categories
-          </Link>
-        </div>
+      {/* CTA */}
+      <div className="text-center pt-4">
+        <Link
+          to="/menu"
+          className="inline-flex items-center gap-2 px-8 py-4 rounded-2xl bg-brand-500 hover:bg-brand-600 text-white font-black text-sm shadow-lg shadow-brand-500/20 transition-all hover:scale-105"
+        >
+          <span>Explore Our Menu</span>
+        </Link>
       </div>
     </div>
   );

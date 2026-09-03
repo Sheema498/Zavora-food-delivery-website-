@@ -2,9 +2,14 @@ import React from 'react';
 import { OrderStatus } from '../../types/index.js';
 import { ORDER_STATUS_CONFIG } from '../../constants/index.js';
 
-export const StatusBadge: React.FC<{ status: OrderStatus; className?: string }> = ({
+export const StatusBadge: React.FC<{
+  status: OrderStatus;
+  className?: string;
+  size?: 'sm' | 'md';
+}> = ({
   status,
   className = '',
+  size = 'md',
 }) => {
   const config = ORDER_STATUS_CONFIG[status] || {
     label: status,
@@ -12,9 +17,11 @@ export const StatusBadge: React.FC<{ status: OrderStatus; className?: string }> 
     bgColor: 'bg-slate-100 border-slate-200',
   };
 
+  const sizeClass = size === 'sm' ? 'px-2 py-0.5 text-[11px]' : 'px-2.5 py-1 text-xs';
+
   return (
     <span
-      className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border ${config.bgColor} ${config.color} ${className}`}
+      className={`inline-flex items-center rounded-full font-semibold border ${sizeClass} ${config.bgColor} ${config.color} ${className}`}
     >
       <span className="w-1.5 h-1.5 rounded-full bg-current mr-1.5 animate-pulse-subtle" />
       {config.label}

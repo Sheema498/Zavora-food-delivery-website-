@@ -1,4 +1,12 @@
-export type Role = 'CUSTOMER' | 'RESTAURANT' | 'DELIVERY_PARTNER' | 'ADMIN';
+export type Role =
+  | 'CUSTOMER'
+  | 'RESTAURANT_MANAGER'
+  | 'DELIVERY_BOY'
+  | 'SUPER_ADMIN'
+  | 'RESTAURANT'
+  | 'RESTAURANT_ADMIN'
+  | 'DELIVERY_PARTNER'
+  | 'ADMIN';
 
 export type OrderStatus =
   | 'PENDING'
@@ -35,6 +43,7 @@ export interface User {
   avatarUrl?: string;
   isActive: boolean;
   restaurantId?: string;
+  deliveryBoyId?: string;
   deliveryPartnerId?: string;
   createdAt?: string;
   updatedAt?: string;
@@ -77,10 +86,10 @@ export interface FoodItem {
   imageUrl?: string | null;
   isAvailable: boolean;
   isVegetarian: boolean;
-  isVegan: boolean;
-  isGlutenFree: boolean;
-  isSpicy: boolean;
-  isBestSeller: boolean;
+  isVegan?: boolean;
+  isGlutenFree?: boolean;
+  isSpicy?: boolean;
+  isBestSeller?: boolean;
   prepTimeMinutes: number;
   calories?: number | null;
   displayOrder: number;
@@ -119,7 +128,7 @@ export interface Restaurant {
   latitude: number;
   longitude: number;
   isOpen: boolean;
-  isFeatured: boolean;
+  isFeatured?: boolean;
   cuisineTypes: string;
   priceRange: string;
   rating: number;
@@ -127,7 +136,7 @@ export interface Restaurant {
   avgPrepTimeMinutes: number;
   deliveryFee: number;
   minOrderAmount: number;
-  commissionRate: number;
+  commissionRate?: number;
   totalRevenue: number;
   categories?: FoodCategory[];
   reviews?: RestaurantReview[];
@@ -178,7 +187,7 @@ export interface OrderStatusHistory {
   createdAt: string;
 }
 
-export interface DeliveryPartnerProfile {
+export interface DeliveryBoyProfile {
   id: string;
   userId: string;
   vehicleType: VehicleType;
@@ -186,9 +195,9 @@ export interface DeliveryPartnerProfile {
   licenseNumber: string;
   isOnline: boolean;
   isAvailable: boolean;
-  currentLatitude: number;
-  currentLongitude: number;
-  lastLocationUpdate: string;
+  currentLatitude?: number | null;
+  currentLongitude?: number | null;
+  lastLocationUpdate?: string;
   rating: number;
   totalDeliveries: number;
   totalEarnings: number;
@@ -200,17 +209,19 @@ export interface DeliveryPartnerProfile {
   };
 }
 
+export type DeliveryPartnerProfile = DeliveryBoyProfile;
+
 export interface Order {
   id: string;
   orderNumber: string;
   customerId: string;
   restaurantId: string;
+  deliveryBoyId?: string | null;
   deliveryPartnerId?: string | null;
-  addressId?: string | null;
   status: OrderStatus;
   subtotal: number;
-  taxAmount: number;
   deliveryFee: number;
+  taxAmount: number;
   discountAmount: number;
   tipAmount: number;
   totalAmount: number;
@@ -221,31 +232,46 @@ export interface Order {
   restaurantNotes?: string | null;
   rejectionReason?: string | null;
   cancellationReason?: string | null;
-  estimatedPrepMinutes: number;
-  estimatedDeliveryMinutes: number;
+  estimatedPrepMinutes?: number | null;
+  estimatedDeliveryMinutes?: number | null;
   placedAt: string;
   acceptedAt?: string | null;
+  preparingAt?: string | null;
   readyAt?: string | null;
-  assignedAt?: string | null;
   pickedUpAt?: string | null;
   deliveredAt?: string | null;
   cancelledAt?: string | null;
   createdAt: string;
   updatedAt: string;
-
+  restaurant: Restaurant;
   customer?: {
     id: string;
     name: string;
-    phone?: string | null;
     email: string;
+    phone?: string | null;
     avatarUrl?: string | null;
   };
-  restaurant: Restaurant;
-  deliveryPartner?: DeliveryPartnerProfile | null;
-  address?: Address | null;
+  deliveryBoy?: DeliveryBoyProfile | null;
+  deliveryPartner?: DeliveryBoyProfile | null;
   items: OrderItem[];
   statusHistory?: OrderStatusHistory[];
   review?: RestaurantReview | null;
+}
+
+export interface LatLng {
+  latitude: number;
+  longitude: number;
+}
+
+export interface Notification {
+  id: string;
+  userId: string;
+  title: string;
+  message: string;
+  type: NotificationType;
+  dataJson?: string | null;
+  isRead: boolean;
+  createdAt: string;
 }
 
 export interface Coupon {
@@ -258,17 +284,6 @@ export interface Coupon {
   maxDiscountAmount?: number | null;
   validUntil: string;
   isActive: boolean;
-}
-
-export interface Notification {
-  id: string;
-  userId: string;
-  title: string;
-  message: string;
-  type: NotificationType;
-  dataJson?: string | null;
-  isRead: boolean;
-  createdAt: string;
 }
 
 export interface AuditLog {
@@ -287,9 +302,4 @@ export interface AuditLog {
     email: string;
     role: Role;
   } | null;
-}
-
-export interface LatLng {
-  latitude: number;
-  longitude: number;
 }

@@ -71,7 +71,7 @@ export const CustomerProfile: React.FC = () => {
           {/* Loyalty Banner */}
           <div className="bg-gradient-to-tr from-amber-50 to-orange-50 border border-amber-200 p-3.5 rounded-xl text-left space-y-1">
             <div className="flex items-center gap-1.5 text-xs font-bold text-amber-800">
-              <Award className="w-4 h-4 text-amber-600" /> QuickBite Gourmet Club
+              <Award className="w-4 h-4 text-amber-600" /> Zavora Gourmet Club
             </div>
             <p className="text-[11px] text-amber-700">
               You have <strong className="font-black">120 Loyalty Points</strong> available for order discounts.

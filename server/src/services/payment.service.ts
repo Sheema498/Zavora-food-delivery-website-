@@ -22,7 +22,7 @@ export class PaymentService {
         status: method === 'ONLINE_DEMO_PAY' ? 'PAID' : 'PENDING',
         transactionRef,
         paymentGatewayResponse: JSON.stringify({
-          provider: 'QuickBite Safe Sandbox Mock Gateway',
+          provider: 'Zavora Safe Sandbox Demo Gateway',
           status: 'SUCCESS',
           authCode: `AUTH_${Math.floor(100000 + Math.random() * 900000)}`,
           processedAt: new Date().toISOString(),

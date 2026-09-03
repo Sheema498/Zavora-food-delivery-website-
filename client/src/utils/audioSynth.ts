@@ -1,5 +1,5 @@
 /**
- * QuickBite In-Browser Web Audio Synthesizer
+ * Zavora In-Browser Web Audio Synthesizer
  * Generates instant acoustic audio chimes and cues using standard browser Web Audio API
  * without requiring external audio files or MP3 network requests.
  */
