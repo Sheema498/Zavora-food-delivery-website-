@@ -121,22 +121,7 @@ export class CartService {
       });
     }
 
-    // Check if cart already has items from another restaurant
-    if (cart.restaurantId && cart.restaurantId !== foodItem.restaurantId && cart.items.length > 0) {
-      if (clearExistingIfDifferent) {
-        // Clear old items and switch restaurant
-        await prisma.cartItem.deleteMany({ where: { cartId: cart.id } });
-        await prisma.cart.update({
-          where: { id: cart.id },
-          data: { restaurantId: foodItem.restaurantId },
-        });
-      } else {
-        throw new AppError(
-          'Your cart contains items from another restaurant. Would you like to clear cart and start fresh?',
-          HTTP_STATUS.CONFLICT
-        );
-      }
-    } else if (!cart.restaurantId) {
+    if (!cart.restaurantId) {
       await prisma.cart.update({
         where: { id: cart.id },
         data: { restaurantId: foodItem.restaurantId },

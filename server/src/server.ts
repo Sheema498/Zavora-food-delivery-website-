@@ -37,7 +37,7 @@ if (process.env.NODE_ENV !== 'test') {
   const PORT = config.port;
   httpServer.listen(PORT, () => {
     console.log(`====================================================`);
-    console.log(`🚀 QuickBite Server Running on http://localhost:${PORT}`);
+    console.log(`🚀 ZAVORA Server Running on http://localhost:${PORT}`);
     console.log(`📡 Socket.IO Gateway Ready`);
     console.log(`🔗 API Base: http://localhost:${PORT}/api`);
     console.log(`🛡️  Environment: ${config.env}`);
@@ -45,7 +45,7 @@ if (process.env.NODE_ENV !== 'test') {
   });
 
   const handleShutdown = async () => {
-    console.log('\nShutting down QuickBite server gracefully...');
+    console.log('\nShutting down Zavora server gracefully...');
     await prisma.$disconnect();
     httpServer.close(() => {
       console.log('Server closed. Goodbye!');

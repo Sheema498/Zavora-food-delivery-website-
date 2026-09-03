@@ -1,6 +1,6 @@
 import prisma from '../lib/prisma.js';
 import { AppError } from '../middleware/error.middleware.js';
-import { HTTP_STATUS } from '../constants/index.js';
+import { HTTP_STATUS, ZAVORA_RESTAURANT } from '../constants/index.js';
 import { generateOrderNumber } from '../utils/orderNumber.utils.js';
 import { calculateOrderPriceBreakdown } from '../utils/price.utils.js';
 import { calculateDistanceKm, estimateTravelMinutes } from '../utils/geo.utils.js';
@@ -12,7 +12,7 @@ import { AuditService } from './audit.service.js';
 import { getSocketIoInstance } from '../socket/index.js';
 
 export interface CreateOrderDto {
-  restaurantId: string;
+  restaurantId?: string;
   addressId: string;
   items: Array<{
     foodItemId: string;
@@ -36,40 +36,42 @@ export class OrderService {
       throw new AppError('Cart cannot be empty when placing an order', HTTP_STATUS.BAD_REQUEST);
     }
 
-    const [customer, restaurant, address] = await Promise.all([
+    // Resolve the single Zavora Restaurant
+    const restaurant = await prisma.restaurant.findFirst();
+    if (!restaurant) {
+      throw new AppError('Zavora restaurant profile not configured', HTTP_STATUS.INTERNAL_SERVER_ERROR);
+    }
+
+    const [customer, address] = await Promise.all([
       prisma.user.findUnique({ where: { id: customerId } }),
-      prisma.restaurant.findUnique({ where: { id: dto.restaurantId } }),
       prisma.address.findFirst({ where: { id: dto.addressId, userId: customerId } }),
     ]);
 
     if (!customer) throw new AppError('Customer not found', HTTP_STATUS.NOT_FOUND);
-    if (!restaurant) throw new AppError('Restaurant not found', HTTP_STATUS.NOT_FOUND);
-    if (!restaurant.isOpen) {
-      throw new AppError('This restaurant is currently closed and not accepting orders', HTTP_STATUS.BAD_REQUEST);
-    }
     if (!address) throw new AppError('Delivery address not found', HTTP_STATUS.NOT_FOUND);
+    if (!restaurant.isOpen) {
+      throw new AppError('Zavora restaurant is currently closed and not accepting orders', HTTP_STATUS.BAD_REQUEST);
+    }
 
-    // Fetch food items to verify availability and prices
+    // Fetch food items from Zavora database
     const itemIds = dto.items.map((i) => i.foodItemId);
     const dbFoodItems = await prisma.foodItem.findMany({
       where: {
         id: { in: itemIds },
-        restaurantId: dto.restaurantId,
+        restaurantId: restaurant.id,
       },
     });
 
     if (dbFoodItems.length !== dto.items.length) {
-      throw new AppError('One or more items do not belong to this restaurant', HTTP_STATUS.BAD_REQUEST);
+      throw new AppError('One or more items do not belong to Zavora restaurant', HTTP_STATUS.BAD_REQUEST);
     }
 
-    // Verify all items are available
     for (const dbItem of dbFoodItems) {
       if (!dbItem.isAvailable) {
         throw new AppError(`Item "${dbItem.name}" is currently out of stock`, HTTP_STATUS.BAD_REQUEST);
       }
     }
 
-    // Calculate distance and pricing
     const distanceKm = calculateDistanceKm(
       { latitude: restaurant.latitude, longitude: restaurant.longitude },
       { latitude: address.latitude, longitude: address.longitude }
@@ -97,7 +99,6 @@ export class OrderService {
     if (dto.couponCode) {
       const couponRes = await CouponService.validateCoupon(dto.couponCode, subtotal);
       couponDiscount = couponRes.discountAmount;
-      // Increment coupon usage
       await prisma.coupon.update({
         where: { code: dto.couponCode.toUpperCase().trim() },
         data: { usedCount: { increment: 1 } },
@@ -112,14 +113,14 @@ export class OrderService {
     );
 
     const estimatedDeliveryMinutes = estimateTravelMinutes(distanceKm, restaurant.avgPrepTimeMinutes);
-    const orderNumber = generateOrderNumber();
+    const orderNumber = generateOrderNumber(); // Generates ZV-XXXX
 
     const order = await prisma.$transaction(async (tx) => {
       const newOrder = await tx.order.create({
         data: {
           orderNumber,
           customerId,
-          restaurantId: dto.restaurantId,
+          restaurantId: restaurant.id,
           addressId: dto.addressId,
           status: 'PENDING',
           subtotal: priceBreakdown.subtotal,
@@ -196,26 +197,24 @@ export class OrderService {
       dto.paymentMethod
     );
 
-    // In-app Notifications
-    await Promise.all([
-      NotificationService.send({
-        userId: customerId,
-        title: 'Order Placed Successfully! 🎉',
-        message: `Your order #${order.orderNumber} at ${restaurant.name} has been placed for ₹${order.totalAmount}.`,
-        type: 'ORDER_STATUS',
-        data: { orderId: order.id, orderNumber: order.orderNumber },
-      }),
-    ]);
+    // In-app Notification to Customer
+    await NotificationService.send({
+      userId: customerId,
+      title: 'Order Placed Successfully! 🎉',
+      message: `Your order #${order.orderNumber} has been received by Zavora Restaurant for ₹${order.totalAmount}.`,
+      type: 'ORDER_STATUS',
+      data: { orderId: order.id, orderNumber: order.orderNumber },
+    });
 
-    // Notify Restaurant Staff
-    const staffMembers = await prisma.restaurantStaff.findMany({
+    // Notify Restaurant Manager
+    const managers = await prisma.restaurantManager.findMany({
       where: { restaurantId: restaurant.id },
       select: { userId: true },
     });
 
-    for (const staff of staffMembers) {
+    for (const mgr of managers) {
       await NotificationService.send({
-        userId: staff.userId,
+        userId: mgr.userId,
         title: '🔔 New Incoming Order!',
         message: `Order #${order.orderNumber} received for ₹${order.totalAmount}. Please accept and begin preparation.`,
         type: 'ORDER_STATUS',
@@ -226,7 +225,7 @@ export class OrderService {
     // Socket.IO Real-Time Broadcasts
     const io = getSocketIoInstance();
     if (io) {
-      // Alert Restaurant Channel
+      // Alert Restaurant Manager
       io.to(`restaurant:${restaurant.id}`).emit('order:created', {
         orderId: order.id,
         restaurantId: restaurant.id,
@@ -234,8 +233,8 @@ export class OrderService {
         totalAmount: order.totalAmount,
       });
 
-      // Alert Admin Operations Feed
-      io.to('admin:live-orders').emit('order:created', {
+      // Alert Admin Dashboard (metrics update)
+      io.to('admin:dashboard').emit('order:created', {
         orderId: order.id,
         restaurantId: restaurant.id,
         orderNumber: order.orderNumber,
@@ -270,7 +269,7 @@ export class OrderService {
           select: { id: true, name: true, phone: true, email: true, avatarUrl: true },
         },
         address: true,
-        deliveryPartner: {
+        deliveryBoy: {
           include: {
             user: {
               select: { id: true, name: true, phone: true, avatarUrl: true },
@@ -291,18 +290,31 @@ export class OrderService {
 
     // Authorization check
     if (requestingUser) {
-      if (
-        requestingUser.role === 'CUSTOMER' &&
-        order.customerId !== requestingUser.userId
-      ) {
+      if (requestingUser.role === 'CUSTOMER' && order.customerId !== requestingUser.userId) {
         throw new AppError('Unauthorized access to this order', HTTP_STATUS.FORBIDDEN);
       }
       if (
-        requestingUser.role === 'DELIVERY_PARTNER' &&
-        order.deliveryPartnerId &&
-        order.deliveryPartner?.userId !== requestingUser.userId
+        (requestingUser.role === 'DELIVERY_BOY' || requestingUser.role === 'DELIVERY_PARTNER') &&
+        order.deliveryBoyId &&
+        order.deliveryBoy?.userId !== requestingUser.userId
       ) {
         throw new AppError('Unauthorized access to this order', HTTP_STATUS.FORBIDDEN);
+      }
+    }
+
+    // GPS PRIVACY RESTRICTION:
+    // Manager and Super Admin MUST NOT see live GPS coordinates!
+    // Scrub live coordinates if the viewer is Manager or Super Admin.
+    if (requestingUser && (
+      requestingUser.role === 'RESTAURANT_MANAGER' ||
+      requestingUser.role === 'RESTAURANT' ||
+      requestingUser.role === 'SUPER_ADMIN' ||
+      requestingUser.role === 'ADMIN'
+    )) {
+      if (order.deliveryBoy) {
+        // Obfuscate coordinates for Manager and Admin to strictly uphold GPS privacy
+        (order.deliveryBoy as any).currentLatitude = null;
+        (order.deliveryBoy as any).currentLongitude = null;
       }
     }
 
@@ -323,7 +335,7 @@ export class OrderService {
             select: { id: true, name: true, slug: true, logoUrl: true, address: true },
           },
           items: true,
-          deliveryPartner: {
+          deliveryBoy: {
             include: {
               user: { select: { name: true, phone: true } },
             },
@@ -359,7 +371,7 @@ export class OrderService {
         include: {
           items: true,
           customer: { select: { id: true, name: true, phone: true } },
-          deliveryPartner: {
+          deliveryBoy: {
             include: {
               user: { select: { name: true, phone: true } },
             },
@@ -370,7 +382,22 @@ export class OrderService {
       prisma.order.count({ where }),
     ]);
 
-    return { orders, total, page, limit, totalPages: Math.ceil(total / limit) };
+    // Strip live GPS coordinates from delivery boy for Manager
+    const sanitizedOrders = orders.map((o) => {
+      if (o.deliveryBoy) {
+        return {
+          ...o,
+          deliveryBoy: {
+            ...o.deliveryBoy,
+            currentLatitude: null,
+            currentLongitude: null,
+          },
+        };
+      }
+      return o;
+    });
+
+    return { orders: sanitizedOrders, total, page, limit, totalPages: Math.ceil(total / limit) };
   }
 
   public static async updateOrderStatus(
@@ -389,7 +416,7 @@ export class OrderService {
       include: {
         restaurant: true,
         customer: true,
-        deliveryPartner: {
+        deliveryBoy: {
           include: { user: true },
         },
       },
@@ -403,7 +430,7 @@ export class OrderService {
 
     // Role Permission check
     const allowedForRole = ROLE_ALLOWED_STATUS_TRANSITIONS[actor.role];
-    if (!allowedForRole.includes(targetStatus)) {
+    if (!allowedForRole || !allowedForRole.includes(targetStatus)) {
       throw new AppError(
         `Role ${actor.role} is not permitted to perform transition to ${targetStatus}`,
         HTTP_STATUS.FORBIDDEN
@@ -412,14 +439,14 @@ export class OrderService {
 
     // State machine transition validation
     const validNextStates = VALID_ORDER_TRANSITIONS[currentStatus];
-    if (actor.role !== 'ADMIN' && !validNextStates.includes(targetStatus)) {
+    const isSuperAdmin = actor.role === 'SUPER_ADMIN' || actor.role === 'ADMIN';
+    if (!isSuperAdmin && !validNextStates.includes(targetStatus)) {
       throw new AppError(
         `Invalid order state transition from ${currentStatus} to ${targetStatus}. Valid next states: [${validNextStates.join(', ')}]`,
         HTTP_STATUS.BAD_REQUEST
       );
     }
 
-    // Update timestamps and details
     const updateData: Record<string, unknown> = {
       status: targetStatus,
     };
@@ -436,10 +463,11 @@ export class OrderService {
     } else if (targetStatus === 'DELIVERED') {
       updateData.deliveredAt = new Date();
       updateData.paymentStatus = 'PAID';
-      // Mark delivery partner as available
-      if (order.deliveryPartnerId) {
-        await prisma.deliveryPartnerProfile.update({
-          where: { id: order.deliveryPartnerId },
+
+      // Update Delivery Boy stats
+      if (order.deliveryBoyId) {
+        await prisma.deliveryBoy.update({
+          where: { id: order.deliveryBoyId },
           data: {
             isAvailable: true,
             totalDeliveries: { increment: 1 },
@@ -447,7 +475,8 @@ export class OrderService {
           },
         });
       }
-      // Update restaurant revenue
+
+      // Update Restaurant revenue
       await prisma.restaurant.update({
         where: { id: order.restaurantId },
         data: {
@@ -480,7 +509,7 @@ export class OrderService {
           items: true,
           restaurant: true,
           customer: true,
-          deliveryPartner: { include: { user: true } },
+          deliveryBoy: { include: { user: true } },
           statusHistory: { orderBy: { createdAt: 'asc' } },
         },
       });
@@ -515,6 +544,148 @@ export class OrderService {
     return updatedOrder;
   }
 
+  // Assign the ONE Zavora Delivery Boy
+  public static async assignZavoraDeliveryBoy(orderId: string, assignedByUserId: string) {
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+      include: {
+        restaurant: true,
+        customer: true,
+      },
+    });
+
+    if (!order) {
+      throw new AppError('Order not found', HTTP_STATUS.NOT_FOUND);
+    }
+
+    // Find the single Zavora delivery boy
+    const deliveryBoy = await prisma.deliveryBoy.findFirst({
+      where: { restaurantId: order.restaurantId },
+      include: { user: true },
+    });
+
+    if (!deliveryBoy) {
+      throw new AppError('No active Delivery Boy found for Zavora Restaurant', HTTP_STATUS.BAD_REQUEST);
+    }
+
+    const distanceKm = calculateDistanceKm(
+      { latitude: deliveryBoy.currentLatitude, longitude: deliveryBoy.currentLongitude },
+      { latitude: order.restaurant.latitude, longitude: order.restaurant.longitude }
+    );
+    const estimatedMinutes = estimateTravelMinutes(distanceKm);
+
+    const result = await prisma.$transaction(async (tx) => {
+      // Mark any prior assignments as REASSIGNED
+      await tx.deliveryAssignment.updateMany({
+        where: { orderId, status: 'ASSIGNED' },
+        data: { status: 'REASSIGNED' },
+      });
+
+      const assignment = await tx.deliveryAssignment.create({
+        data: {
+          orderId,
+          deliveryBoyId: deliveryBoy.id,
+          assignedById: assignedByUserId,
+          status: 'ASSIGNED',
+          distanceKm,
+          estimatedMinutes,
+        },
+      });
+
+      const updatedOrder = await tx.order.update({
+        where: { id: orderId },
+        data: {
+          deliveryBoyId: deliveryBoy.id,
+          status: 'DELIVERY_ASSIGNED',
+          assignedAt: new Date(),
+        },
+        include: {
+          restaurant: true,
+          customer: true,
+          items: true,
+          deliveryBoy: { include: { user: true } },
+        },
+      });
+
+      await tx.orderStatusHistory.create({
+        data: {
+          orderId,
+          status: 'DELIVERY_ASSIGNED',
+          notes: `Delivery assigned to Zavora courier ${deliveryBoy.user.name}`,
+          changedById: assignedByUserId,
+          changedByRole: 'RESTAURANT_MANAGER',
+        },
+      });
+
+      // Mark driver as occupied
+      await tx.deliveryBoy.update({
+        where: { id: deliveryBoy.id },
+        data: { isAvailable: false },
+      });
+
+      return { assignment, updatedOrder };
+    });
+
+    // Notify Driver
+    await NotificationService.send({
+      userId: deliveryBoy.userId,
+      title: '🛵 New Delivery Assigned!',
+      message: `You have been assigned order #${order.orderNumber} from Zavora. Tap to accept.`,
+      type: 'DELIVERY_ASSIGNED',
+      data: { orderId: order.id, orderNumber: order.orderNumber },
+    });
+
+    // Notify Customer
+    await NotificationService.send({
+      userId: order.customerId,
+      title: 'Delivery Partner Assigned 🛵',
+      message: `${deliveryBoy.user.name} has been assigned to deliver your order #${order.orderNumber}.`,
+      type: 'ORDER_STATUS',
+      data: { orderId: order.id, driverName: deliveryBoy.user.name },
+    });
+
+    // Real-Time Socket Broadcasts
+    const io = getSocketIoInstance();
+    if (io) {
+      // Alert Driver Channel
+      io.to(`delivery:${deliveryBoy.id}`).emit('delivery:assigned', {
+        orderId: order.id,
+        deliveryBoyId: deliveryBoy.id,
+        orderNumber: order.orderNumber,
+        restaurantName: order.restaurant.name,
+        customerAddress: order.deliveryAddressSnapshot,
+      });
+
+      // Alert Order room (customer)
+      io.to(`order:status:${order.id}`).emit('delivery:assigned', {
+        orderId: order.id,
+        deliveryBoyId: deliveryBoy.id,
+        driverName: deliveryBoy.user.name,
+        driverPhone: deliveryBoy.user.phone,
+      });
+
+      // Alert Manager Channel
+      io.to(`restaurant:${order.restaurantId}`).emit('order:status-changed', {
+        orderId: order.id,
+        orderNumber: order.orderNumber,
+        status: 'DELIVERY_ASSIGNED',
+        deliveryBoyId: deliveryBoy.id,
+        driverName: deliveryBoy.user.name,
+      });
+
+      // Alert Admin
+      io.to('admin:dashboard').emit('order:status-changed', {
+        orderId: order.id,
+        orderNumber: order.orderNumber,
+        status: 'DELIVERY_ASSIGNED',
+        deliveryBoyId: deliveryBoy.id,
+        driverName: deliveryBoy.user.name,
+      });
+    }
+
+    return result.updatedOrder;
+  }
+
   private static async dispatchStatusNotifications(order: any, status: OrderStatus) {
     const customerId = order.customerId;
     const restName = order.restaurant.name;
@@ -540,23 +711,83 @@ export class OrderService {
       await NotificationService.send({
         userId: customerId,
         title: 'Food is Packed & Ready 📦',
-        message: `Order #${orderNum} is ready for pickup at ${restName}. Dispatching delivery partner.`,
+        message: `Order #${orderNum} is ready for pickup at Zavora. Dispatching delivery partner.`,
+        type: 'ORDER_STATUS',
+        data: { orderId: order.id, status },
+      });
+    } else if (status === 'DELIVERY_ACCEPTED') {
+      await NotificationService.send({
+        userId: customerId,
+        title: 'Courier Accepted Delivery 🛵',
+        message: `Your courier has accepted the delivery and is on the way to Zavora.`,
+        type: 'ORDER_STATUS',
+        data: { orderId: order.id, status },
+      });
+    } else if (status === 'ARRIVED_AT_RESTAURANT') {
+      await NotificationService.send({
+        userId: customerId,
+        title: 'Courier Arrived at Zavora 📍',
+        message: `Your delivery partner has arrived at Zavora Restaurant to pick up your food.`,
+        type: 'ORDER_STATUS',
+        data: { orderId: order.id, status },
+      });
+    } else if (status === 'PICKED_UP') {
+      await NotificationService.send({
+        userId: customerId,
+        title: 'Food Picked Up! 🛍️',
+        message: `Your food has been picked up from Zavora and is being secured for delivery.`,
+        type: 'ORDER_STATUS',
+        data: { orderId: order.id, status },
+      });
+    } else if (status === 'ON_THE_WAY') {
+      await NotificationService.send({
+        userId: customerId,
+        title: 'Order is On The Way! 🚀',
+        message: `Your courier is en route to your address. Live GPS tracking is active.`,
         type: 'ORDER_STATUS',
         data: { orderId: order.id, status },
       });
     } else if (status === 'DELIVERED') {
+      // Final delivery notification to:
+      // 1. Customer
       await NotificationService.send({
         userId: customerId,
-        title: 'Order Delivered! 🍕 Enjoy your meal',
-        message: `Your order #${orderNum} has been delivered. Please share your rating & review!`,
+        title: 'Order Delivered! 🎉 Enjoy your meal',
+        message: `Order #${orderNum} has been delivered successfully. Thank you for choosing Zavora!`,
         type: 'ORDER_STATUS',
         data: { orderId: order.id, status },
       });
+
+      // 2. Restaurant Manager
+      const managers = await prisma.restaurantManager.findMany({
+        where: { restaurantId: order.restaurantId },
+        select: { userId: true },
+      });
+      for (const mgr of managers) {
+        await NotificationService.send({
+          userId: mgr.userId,
+          title: 'Order Delivered Successfully ✅',
+          message: `Order #${orderNum} has been delivered to customer ${order.customer.name}.`,
+          type: 'ORDER_STATUS',
+          data: { orderId: order.id, status },
+        });
+      }
+
+      // 3. Delivery Boy
+      if (order.deliveryBoy?.userId) {
+        await NotificationService.send({
+          userId: order.deliveryBoy.userId,
+          title: 'Delivery Mission Completed! 💰',
+          message: `Order #${orderNum} delivered successfully. ₹45 credited to your earnings.`,
+          type: 'ORDER_STATUS',
+          data: { orderId: order.id, status },
+        });
+      }
     } else if (status === 'RESTAURANT_REJECTED') {
       await NotificationService.send({
         userId: customerId,
         title: 'Order Declined by Restaurant',
-        message: `Sorry, ${restName} could not fulfill order #${orderNum}: ${order.rejectionReason}`,
+        message: `Sorry, Zavora could not fulfill order #${orderNum}: ${order.rejectionReason}`,
         type: 'ORDER_STATUS',
         data: { orderId: order.id, status },
       });
@@ -575,26 +806,25 @@ export class OrderService {
       updatedAt: new Date().toISOString(),
     };
 
-    // Emit to order room (customer, driver, admin)
-    io.to(`order:${order.id}`).emit(`order:${status.toLowerCase()}`, baseData);
-    io.to(`order:${order.id}`).emit('order:status-changed', baseData);
+    // Emit to order status room (for customer live page)
+    io.to(`order:status:${order.id}`).emit(`order:${status.toLowerCase()}`, baseData);
+    io.to(`order:status:${order.id}`).emit('order:status-changed', baseData);
 
-    // Emit to Admin Live Orders channel
-    io.to('admin:live-orders').emit('order:status-changed', baseData);
-    io.to('admin:live-orders').emit(`order:${status.toLowerCase()}`, baseData);
+    // Emit to Manager channel
+    io.to(`restaurant:${order.restaurantId}`).emit('order:status-changed', baseData);
+    io.to(`restaurant:${order.restaurantId}`).emit(`order:${status.toLowerCase()}`, baseData);
 
-    // Specific event dispatches
-    if (status === 'READY_FOR_PICKUP') {
-      io.to('admin:live-orders').emit('order:ready', {
-        orderId: order.id,
-        restaurantName: order.restaurant.name,
-        restaurantId: order.restaurantId,
-      });
-    } else if (status === 'DELIVERED') {
-      io.to(`restaurant:${order.restaurantId}`).emit('order:delivered', {
-        orderId: order.id,
-        deliveredAt: new Date().toISOString(),
-      });
+    // Emit to Admin Dashboard channel (NO GPS)
+    io.to('admin:dashboard').emit('order:status-changed', baseData);
+
+    // Specific dispatches
+    if (status === 'DELIVERED') {
+      if (order.deliveryBoyId) {
+        io.to(`delivery:${order.deliveryBoyId}`).emit('order:delivered', {
+          orderId: order.id,
+          deliveredAt: new Date().toISOString(),
+        });
+      }
     }
   }
 }

@@ -6,11 +6,7 @@ import { AppError } from '../middleware/error.middleware.js';
 
 export class DeliveryController {
   public static async getAvailableDrivers(req: AuthenticatedRequest, res: Response): Promise<void> {
-    const { lat, lng } = req.query;
-    const drivers = await DeliveryService.getAvailableDeliveryPartners(
-      lat ? Number(lat) : undefined,
-      lng ? Number(lng) : undefined
-    );
+    const drivers = await DeliveryService.getAvailableDeliveryPartners();
     res.status(HTTP_STATUS.OK).json({
       success: true,
       data: drivers,
@@ -18,25 +14,26 @@ export class DeliveryController {
   }
 
   public static async assignDriver(req: AuthenticatedRequest, res: Response): Promise<void> {
-    const { orderId, deliveryPartnerId } = req.body;
+    const { orderId, deliveryBoyId, deliveryPartnerId } = req.body;
     const assignedByUserId = req.user!.userId;
+    const driverId = deliveryBoyId || deliveryPartnerId || '';
 
-    const result = await DeliveryService.assignDriver(orderId, deliveryPartnerId, assignedByUserId);
+    const result = await DeliveryService.assignDriver(orderId, driverId, assignedByUserId);
     res.status(HTTP_STATUS.OK).json({
       success: true,
-      message: 'Delivery partner assigned successfully',
+      message: 'Delivery boy assigned successfully',
       data: result,
     });
   }
 
   public static async acceptAssignment(req: AuthenticatedRequest, res: Response): Promise<void> {
     const { orderId } = req.params;
-    const deliveryPartnerId = req.user?.deliveryPartnerId;
-    if (!deliveryPartnerId) {
-      throw new AppError('Delivery Partner profile not found for this account', HTTP_STATUS.BAD_REQUEST);
+    const deliveryBoyId = req.user?.deliveryBoyId || req.user?.deliveryPartnerId;
+    if (!deliveryBoyId) {
+      throw new AppError('Delivery Boy profile not found for this account', HTTP_STATUS.BAD_REQUEST);
     }
 
-    const order = await DeliveryService.acceptAssignment(orderId, deliveryPartnerId, req.user!.userId);
+    const order = await DeliveryService.acceptAssignment(orderId, deliveryBoyId, req.user!.userId);
     res.status(HTTP_STATUS.OK).json({
       success: true,
       message: 'Assignment accepted',
@@ -49,7 +46,7 @@ export class DeliveryController {
     const order = await DeliveryService.markArrivedAtRestaurant(orderId, req.user!.userId);
     res.status(HTTP_STATUS.OK).json({
       success: true,
-      message: 'Marked as arrived at restaurant',
+      message: 'Marked as arrived at Zavora Restaurant',
       data: order,
     });
   }
@@ -69,7 +66,7 @@ export class DeliveryController {
     const order = await DeliveryService.startDelivery(orderId, req.user!.userId);
     res.status(HTTP_STATUS.OK).json({
       success: true,
-      message: 'Delivery started (on the way)',
+      message: 'Delivery started (live GPS active)',
       data: order,
     });
   }
@@ -85,13 +82,13 @@ export class DeliveryController {
   }
 
   public static async toggleOnline(req: AuthenticatedRequest, res: Response): Promise<void> {
-    const deliveryPartnerId = req.user?.deliveryPartnerId;
-    if (!deliveryPartnerId) {
-      throw new AppError('Delivery Partner profile not found', HTTP_STATUS.BAD_REQUEST);
+    const deliveryBoyId = req.user?.deliveryBoyId || req.user?.deliveryPartnerId;
+    if (!deliveryBoyId) {
+      throw new AppError('Delivery partner profile not found', HTTP_STATUS.BAD_REQUEST);
     }
 
     const { isOnline } = req.body;
-    const profile = await DeliveryService.toggleOnlineStatus(deliveryPartnerId, isOnline);
+    const profile = await DeliveryService.toggleOnlineStatus(deliveryBoyId, isOnline);
     res.status(HTTP_STATUS.OK).json({
       success: true,
       message: `Status updated: You are now ${isOnline ? 'ONLINE' : 'OFFLINE'}`,
@@ -100,12 +97,12 @@ export class DeliveryController {
   }
 
   public static async getActiveDelivery(req: AuthenticatedRequest, res: Response): Promise<void> {
-    const deliveryPartnerId = req.user?.deliveryPartnerId;
-    if (!deliveryPartnerId) {
-      throw new AppError('Delivery Partner profile not found', HTTP_STATUS.BAD_REQUEST);
+    const deliveryBoyId = req.user?.deliveryBoyId || req.user?.deliveryPartnerId;
+    if (!deliveryBoyId) {
+      throw new AppError('Delivery partner profile not found', HTTP_STATUS.BAD_REQUEST);
     }
 
-    const activeOrder = await DeliveryService.getDriverActiveDelivery(deliveryPartnerId);
+    const activeOrder = await DeliveryService.getActiveDelivery(deliveryBoyId);
     res.status(HTTP_STATUS.OK).json({
       success: true,
       data: activeOrder,
@@ -113,15 +110,40 @@ export class DeliveryController {
   }
 
   public static async getEarnings(req: AuthenticatedRequest, res: Response): Promise<void> {
-    const deliveryPartnerId = req.user?.deliveryPartnerId;
-    if (!deliveryPartnerId) {
-      throw new AppError('Delivery Partner profile not found', HTTP_STATUS.BAD_REQUEST);
+    const deliveryBoyId = req.user?.deliveryBoyId || req.user?.deliveryPartnerId;
+    if (!deliveryBoyId) {
+      throw new AppError('Delivery partner profile not found', HTTP_STATUS.BAD_REQUEST);
     }
 
-    const earnings = await DeliveryService.getDriverEarnings(deliveryPartnerId);
+    const earnings = await DeliveryService.getEarnings(deliveryBoyId);
     res.status(HTTP_STATUS.OK).json({
       success: true,
       data: earnings,
+    });
+  }
+
+  public static async getHistory(req: AuthenticatedRequest, res: Response): Promise<void> {
+    const deliveryBoyId = req.user?.deliveryBoyId || req.user?.deliveryPartnerId;
+    if (!deliveryBoyId) {
+      throw new AppError('Delivery partner profile not found', HTTP_STATUS.BAD_REQUEST);
+    }
+
+    const { page, limit } = req.query;
+    const history = await DeliveryService.getDeliveryHistory(
+      deliveryBoyId,
+      page ? Number(page) : 1,
+      limit ? Number(limit) : 20
+    );
+
+    res.status(HTTP_STATUS.OK).json({
+      success: true,
+      data: history.orders,
+      meta: {
+        page: history.page,
+        limit: history.limit,
+        total: history.total,
+        totalPages: history.totalPages,
+      },
     });
   }
 }

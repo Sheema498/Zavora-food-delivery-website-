@@ -27,7 +27,7 @@ apiRouter.use('/notifications', notificationRoutes);
 apiRouter.get('/health', (_req, res) => {
   res.status(200).json({
     status: 'healthy',
-    platform: 'QuickBite Food Delivery Management System',
+    platform: 'Zavora Single-Restaurant Food Delivery Platform',
     timestamp: new Date().toISOString(),
     version: '1.0.0',
   });

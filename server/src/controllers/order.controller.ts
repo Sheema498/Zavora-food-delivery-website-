@@ -49,7 +49,7 @@ export class OrderController {
   }
 
   public static async getRestaurantOrders(req: AuthenticatedRequest, res: Response): Promise<void> {
-    const restaurantId = req.user?.restaurantId || (req.query.restaurantId as string);
+    const restaurantId = req.user?.restaurantId || (req.query.restaurantId as string) || '';
     const { status, page, limit } = req.query;
 
     const result = await OrderService.listRestaurantOrders(
@@ -95,6 +95,17 @@ export class OrderController {
     res.status(HTTP_STATUS.OK).json({
       success: true,
       message: `Order status updated to ${status}`,
+      data: updatedOrder,
+    });
+  }
+
+  public static async assignDeliveryBoy(req: AuthenticatedRequest, res: Response): Promise<void> {
+    const { id } = req.params;
+    const updatedOrder = await OrderService.assignZavoraDeliveryBoy(id, req.user!.userId);
+
+    res.status(HTTP_STATUS.OK).json({
+      success: true,
+      message: 'Order assigned to Zavora Delivery Boy',
       data: updatedOrder,
     });
   }

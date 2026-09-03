@@ -8,7 +8,7 @@ import { asyncHandler } from '../middleware/error.middleware.js';
 const router = Router();
 
 const createOrderSchema = z.object({
-  restaurantId: z.string().min(1, 'Restaurant ID is required'),
+  restaurantId: z.string().optional(),
   addressId: z.string().min(1, 'Address ID is required'),
   items: z
     .array(
@@ -57,6 +57,7 @@ router.get('/customer/my-orders', asyncHandler(OrderController.getCustomerOrders
 router.get('/restaurant/orders', asyncHandler(OrderController.getRestaurantOrders));
 router.get('/:id', asyncHandler(OrderController.getById));
 router.put('/:id/status', validateBody(updateStatusSchema), asyncHandler(OrderController.updateStatus));
+router.post('/:id/assign-delivery', asyncHandler(OrderController.assignDeliveryBoy));
 router.post('/:id/cancel', validateBody(cancelOrderSchema), asyncHandler(OrderController.cancelOrder));
 
 export default router;
