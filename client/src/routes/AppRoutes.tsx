@@ -3,18 +3,19 @@ import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.js';
 import { Role } from '../types/index.js';
 
-// Common Components
+// Layouts
 import { Navbar } from '../components/common/Navbar.js';
 import { Footer } from '../components/common/Footer.js';
-import { Sidebar } from '../components/common/Sidebar.js';
 import { CartDrawer } from '../components/customer/CartDrawer.js';
 import { NotificationDrawer } from '../components/common/NotificationDrawer.js';
 import { ToastContainer } from '../components/ui/ToastContainer.js';
+import { ManagerLayout } from '../components/layout/ManagerLayout.js';
+import { DeliveryLayout } from '../components/layout/DeliveryLayout.js';
+import { AdminLayout } from '../components/layout/AdminLayout.js';
 
 // Customer Pages
 import { Home } from '../pages/Home.js';
-import { Restaurants } from '../pages/Restaurants.js';
-import { RestaurantDetails } from '../pages/RestaurantDetails.js';
+import { Menu } from '../pages/Menu.js';
 import { Categories } from '../pages/Categories.js';
 import { About } from '../pages/About.js';
 import { Contact } from '../pages/Contact.js';
@@ -26,7 +27,7 @@ import { CustomerProfile } from '../pages/CustomerProfile.js';
 import { Addresses } from '../pages/Addresses.js';
 import { Notifications } from '../pages/Notifications.js';
 
-// Restaurant Pages
+// Restaurant Manager Pages
 import { RestaurantDashboard } from '../pages/RestaurantDashboard.js';
 import { RestaurantOrders } from '../pages/RestaurantOrders.js';
 import { RestaurantMenu } from '../pages/RestaurantMenu.js';
@@ -34,19 +35,17 @@ import { RestaurantEarnings } from '../pages/RestaurantEarnings.js';
 import { RestaurantReviews } from '../pages/RestaurantReviews.js';
 import { RestaurantSettings } from '../pages/RestaurantSettings.js';
 
-// Delivery Pages
+// Delivery Boy Pages
 import { DeliveryDashboard } from '../pages/DeliveryDashboard.js';
 import { DeliveryActive } from '../pages/DeliveryActive.js';
 import { DeliveryHistory } from '../pages/DeliveryHistory.js';
 import { DeliveryEarnings } from '../pages/DeliveryEarnings.js';
 import { DeliveryProfile } from '../pages/DeliveryProfile.js';
 
-// Admin Pages
+// Super Admin Pages
 import { AdminDashboard } from '../pages/AdminDashboard.js';
 import { AdminLiveOrders } from '../pages/AdminLiveOrders.js';
 import { AdminUsers } from '../pages/AdminUsers.js';
-import { AdminRestaurants } from '../pages/AdminRestaurants.js';
-import { AdminDrivers } from '../pages/AdminDrivers.js';
 import { AdminAuditLogs } from '../pages/AdminAuditLogs.js';
 import { AdminSettings } from '../pages/AdminSettings.js';
 
@@ -55,6 +54,7 @@ import { Login } from '../pages/Login.js';
 import { Register } from '../pages/Register.js';
 import { NotFound } from '../pages/NotFound.js';
 
+// Customer Public & Private Layout
 const MainLayout: React.FC = () => (
   <div className="min-h-screen flex flex-col bg-[#faf8f5] text-slate-800">
     <Navbar />
@@ -68,21 +68,7 @@ const MainLayout: React.FC = () => (
   </div>
 );
 
-const PortalLayout: React.FC = () => (
-  <div className="min-h-screen flex flex-col bg-[#faf8f5] text-slate-800">
-    <Navbar />
-    <div className="flex-1 max-w-7xl w-full mx-auto flex">
-      <Sidebar />
-      <main className="flex-1 p-4 sm:p-6 lg:p-8 min-w-0">
-        <Outlet />
-      </main>
-    </div>
-    <Footer />
-    <NotificationDrawer />
-    <ToastContainer />
-  </div>
-);
-
+// Route Protection Guard
 const RequireAuth: React.FC<{ allowedRoles?: Role[] }> = ({ allowedRoles }) => {
   const { user, isAuthenticated, isLoading } = useAuth();
 
@@ -98,8 +84,32 @@ const RequireAuth: React.FC<{ allowedRoles?: Role[] }> = ({ allowedRoles }) => {
     return <Navigate to="/login" replace />;
   }
 
-  if (allowedRoles && !allowedRoles.includes(user.role)) {
-    return <Navigate to="/" replace />;
+  if (allowedRoles) {
+    // Check canonical role with backward-compatible mappings
+    let currentRole = user.role;
+    const isAllowed = allowedRoles.some((role) => {
+      if (role === currentRole) return true;
+      if (
+        (role === 'RESTAURANT_MANAGER' && ['RESTAURANT', 'RESTAURANT_ADMIN'].includes(currentRole)) ||
+        (role === 'RESTAURANT' && currentRole === 'RESTAURANT_MANAGER')
+      )
+        return true;
+      if (
+        (role === 'DELIVERY_BOY' && currentRole === 'DELIVERY_PARTNER') ||
+        (role === 'DELIVERY_PARTNER' && currentRole === 'DELIVERY_BOY')
+      )
+        return true;
+      if (
+        (role === 'SUPER_ADMIN' && currentRole === 'ADMIN') ||
+        (role === 'ADMIN' && currentRole === 'SUPER_ADMIN')
+      )
+        return true;
+      return false;
+    });
+
+    if (!isAllowed) {
+      return <Navigate to="/" replace />;
+    }
   }
 
   return <Outlet />;
@@ -108,47 +118,82 @@ const RequireAuth: React.FC<{ allowedRoles?: Role[] }> = ({ allowedRoles }) => {
 export const AppRoutes: React.FC = () => {
   return (
     <Routes>
-      {/* Public & Customer Layout */}
+      {/* 1. Customer Website Layout (Public & Customer Pages) */}
       <Route element={<MainLayout />}>
         <Route path="/" element={<Home />} />
-        <Route path="/restaurants" element={<Restaurants />} />
-        <Route path="/restaurant/:id" element={<RestaurantDetails />} />
+        <Route path="/menu" element={<Menu />} />
         <Route path="/categories" element={<Categories />} />
         <Route path="/about" element={<About />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
 
-        {/* Customer Protected Routes */}
-        <Route element={<RequireAuth />}>
+        {/* Redirect old multi-restaurant routes to single-restaurant Menu */}
+        <Route path="/restaurants" element={<Navigate to="/menu" replace />} />
+        <Route path="/restaurant/:id" element={<Navigate to="/menu" replace />} />
+
+        {/* Customer Protected Pages */}
+        <Route element={<RequireAuth allowedRoles={['CUSTOMER']} />}>
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/order-confirmation/:id" element={<OrderConfirmation />} />
-          <Route path="/orders/:id/track" element={<LiveOrderTracking />} />
           <Route path="/orders" element={<OrderHistory />} />
           <Route path="/profile" element={<CustomerProfile />} />
           <Route path="/addresses" element={<Addresses />} />
           <Route path="/notifications" element={<Notifications />} />
         </Route>
 
+        {/* Order Tracking (Customer and assigned delivery boy only) */}
+        <Route
+          element={
+            <RequireAuth
+              allowedRoles={[
+                'CUSTOMER',
+                'DELIVERY_BOY',
+                'DELIVERY_PARTNER',
+              ]}
+            />
+          }
+        >
+          <Route path="/orders/:id/track" element={<LiveOrderTracking />} />
+        </Route>
+
         <Route path="*" element={<NotFound />} />
       </Route>
 
-      {/* Restaurant Portal */}
-      <Route element={<RequireAuth allowedRoles={['RESTAURANT', 'ADMIN']} />}>
-        <Route path="/restaurant" element={<PortalLayout />}>
+      {/* 2. Restaurant Manager Portal (Dedicated ManagerLayout - NO Customer Navbar/Footer, NO GPS) */}
+      <Route
+        element={
+          <RequireAuth
+            allowedRoles={['RESTAURANT_MANAGER', 'RESTAURANT', 'RESTAURANT_ADMIN']}
+          />
+        }
+      >
+        <Route path="/manager" element={<ManagerLayout />}>
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<RestaurantDashboard />} />
           <Route path="orders" element={<RestaurantOrders />} />
+          <Route path="orders/:id" element={<RestaurantOrders />} />
           <Route path="menu" element={<RestaurantMenu />} />
+          <Route path="categories" element={<RestaurantMenu />} />
           <Route path="earnings" element={<RestaurantEarnings />} />
           <Route path="reviews" element={<RestaurantReviews />} />
+          <Route path="notifications" element={<Notifications />} />
           <Route path="settings" element={<RestaurantSettings />} />
         </Route>
       </Route>
 
-      {/* Delivery Partner Portal */}
-      <Route element={<RequireAuth allowedRoles={['DELIVERY_PARTNER', 'ADMIN']} />}>
-        <Route path="/delivery" element={<PortalLayout />}>
+      {/* Redirect old /restaurant to /manager */}
+      <Route path="/restaurant/*" element={<Navigate to="/manager/dashboard" replace />} />
+
+      {/* 3. Delivery Boy Portal (Dedicated DeliveryLayout - Mobile-friendly Courier Console) */}
+      <Route
+        element={
+          <RequireAuth
+            allowedRoles={['DELIVERY_BOY', 'DELIVERY_PARTNER']}
+          />
+        }
+      >
+        <Route path="/delivery" element={<DeliveryLayout />}>
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<DeliveryDashboard />} />
           <Route path="active" element={<DeliveryActive />} />
@@ -158,15 +203,24 @@ export const AppRoutes: React.FC = () => {
         </Route>
       </Route>
 
-      {/* Admin Control Center */}
-      <Route element={<RequireAuth allowedRoles={['ADMIN']} />}>
-        <Route path="/admin" element={<PortalLayout />}>
+      {/* 4. Super Admin Control Center (Dedicated AdminLayout - Real Aggregations, NO GPS) */}
+      <Route
+        element={
+          <RequireAuth
+            allowedRoles={['SUPER_ADMIN', 'ADMIN']}
+          />
+        }
+      >
+        <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<AdminDashboard />} />
+          <Route path="orders" element={<AdminLiveOrders />} />
           <Route path="live-orders" element={<AdminLiveOrders />} />
+          <Route path="customers" element={<AdminUsers />} />
           <Route path="users" element={<AdminUsers />} />
-          <Route path="restaurants" element={<AdminRestaurants />} />
-          <Route path="drivers" element={<AdminDrivers />} />
+          <Route path="menu" element={<RestaurantMenu />} />
+          <Route path="analytics" element={<AdminDashboard />} />
+          <Route path="notifications" element={<AdminSettings />} />
           <Route path="audit-logs" element={<AdminAuditLogs />} />
           <Route path="settings" element={<AdminSettings />} />
         </Route>
